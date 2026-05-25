@@ -1,14 +1,17 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "CameraCapture.h"
+#include "Camera.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CameraCapture :: Camera(ThreadSafeQueue<cv::Mat>& buffer)
+Camera :: Camera(ThreadSafeQueue<cv::Mat>& buffer , std::shared_ptr<ImageProcessor> imageProcessorPtr)
 :buffer(buffer)
+,imageProcessorPtr(imageProcessorPtr)
 ,running(true)
 {
-    imageCaptureThread = std::thread(&Camera::captureFrames , this);
+    std::cout << "Camera Ctor caled" << std::endl;
+    if(initCamera())
+        imageCaptureThread = std::thread(&Camera::captureFrames , this);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26,7 +29,7 @@ Camera :: ~Camera()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool CameraCapture :: initCamera()
+bool Camera :: initCamera()
 {
     std::string pipeline =
         "v4l2src device=/dev/video0 ! "
@@ -41,21 +44,28 @@ bool CameraCapture :: initCamera()
         std::cerr << "ERROR: Camera open failed\n";
         return false;
     }
+    else
+    {
+        std::cout << "Camera Open Successful" << std::endl;
+    }
     return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CameraCapture :: captureFrames()
+void Camera :: captureFrames()
 {
     cv::Mat temp;
+    auto algorithmPtr = std::make_unique<Thresholding>(); 
 
-    while (running)
+    while (running.load())
     {
         cap.read(temp);
         if (temp.empty())
             continue;
 
+        // cv::Mat (rows, cols, CV_8UC1);  
+        imageProcessorPtr->setAlgorithm()
         buffer.push(temp);
     }
 }

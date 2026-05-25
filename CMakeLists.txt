@@ -13,6 +13,8 @@ add_executable(cam
 
     UI/FrameUI.cpp
 
+    Camera/Camera.cpp
+
     Algorithms/BinaryImage/ImageProcessor.cpp
     Algorithms/BinaryImage/Thresholding.cpp
 
@@ -30,7 +32,8 @@ target_include_directories(cam PRIVATE
     imgui/backends
     include
     UI
-    core
+    Core
+    Camera
 )
 
 target_link_libraries(cam

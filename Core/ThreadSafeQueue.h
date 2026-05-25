@@ -1,3 +1,5 @@
+#pragma once
+
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -11,7 +13,7 @@ class ThreadSafeQueue
         ThreadSafeQueue(int capacity)
         :capacity(capacity)
         {
-
+            std::cout << "Thread Safe Queue Ctor created" << std::endl;
         }
 
         void push(T data)
@@ -32,13 +34,14 @@ class ThreadSafeQueue
 
         T pop()
         {
+            T data;
             {
                 std::unique_lock<std::mutex> lock(mtx);
                 cv_not_empty.wait(lock , [this](){
                     return buffer.size() > 0;
                 });
 
-                T data = buffer.front();
+                data = buffer.front();
                 buffer.pop();
             }
             return data;
