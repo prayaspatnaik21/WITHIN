@@ -1,55 +1,51 @@
 #pragma once
 
 #include <atomic>
-#include <thread>
 #include <mutex>
 #include <opencv2/opencv.hpp>
 
-#include "imgui.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
-
 #include <GLFW/glfw3.h>
-#include <GL/gl.h>
 
-#include "ThreadSafeQueue.h"
-#include "FactoryUI.h"
+// ImGui
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
-class FrameUI : public FactoryUI
+class FrameUI
 {
 public:
-    FrameUI(ThreadSafeQueue<cv::Mat>& buffer);
+    FrameUI();
     ~FrameUI();
 
-    void run();
+    void run();                        // blocking UI loop
+    void pushFrame(cv::Mat frame);     // called from main
 
 private:
+    // lifecycle
     void initWindow();
     void initImGui();
     void renderLoop();
     void cleanup();
 
-    void createTexture(int width , int height);
-
+    // rendering
     void fetchFrame(cv::Mat& localFrame);
     void updateGLTexture(const cv::Mat& frame, bool& ready);
 
-    void updateTexture(const cv::Mat& frame);
     void startImGuiFrame();
     void drawUI(const cv::Mat& frame, float fps);
     void renderImGui();
 
-    void captureLoop();
+    // OpenGL
+    void createTexture(int w, int h);
+    void updateTexture(const cv::Mat& frame);
 
 private:
-    std::thread frameThread;
     std::atomic<bool> running;
-
-    cv::Mat frame;
-    std::mutex frameMutex;
 
     GLFWwindow* window;
     GLuint textureID;
 
-    ThreadSafeQueue<cv::Mat>& buffer;
+    // shared frame
+    cv::Mat frame;
+    std::mutex frameMutex;
 };

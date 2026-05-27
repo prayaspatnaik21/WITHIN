@@ -4,9 +4,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Camera :: Camera(ThreadSafeQueue<cv::Mat>& buffer , std::shared_ptr<ImageProcessor> imageProcessorPtr)
-:buffer(buffer)
-,imageProcessorPtr(imageProcessorPtr)
+Camera :: Camera(std::unique_ptr<ThreadSafeQueue<cv::Mat>> buffer)
+:buffer(std::move(buffer))
 ,running(true)
 {
     std::cout << "Camera Ctor caled" << std::endl;
@@ -56,17 +55,22 @@ bool Camera :: initCamera()
 void Camera :: captureFrames()
 {
     cv::Mat temp;
-    auto algorithmPtr = std::make_unique<Thresholding>(); 
 
     while (running.load())
     {
         cap.read(temp);
         if (temp.empty())
             continue;
-
-        // cv::Mat (rows, cols, CV_8UC1);  
-        imageProcessorPtr->setAlgorithm()
-        buffer.push(temp);
+        buffer->push(temp);
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+cv::Mat Camera :: getFrame()
+{
+    auto frame = buffer->pop();
+    return frame;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

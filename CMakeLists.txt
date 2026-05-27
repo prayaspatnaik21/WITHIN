@@ -9,6 +9,8 @@ find_package(glfw3 REQUIRED)
 
 add_executable(cam
     main.cpp
+
+    App/App.cpp
     src/utils.cpp
 
     UI/FrameUI.cpp
@@ -34,6 +36,8 @@ target_include_directories(cam PRIVATE
     UI
     Core
     Camera
+    App
+    Algorithms/BinaryImage
 )
 
 target_link_libraries(cam

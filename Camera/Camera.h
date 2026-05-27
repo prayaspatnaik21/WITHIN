@@ -2,6 +2,7 @@
 
 #include <opencv2/opencv.hpp>
 #include "ThreadSafeQueue.h"
+#include "ImageProcessor.h"
 #include <string_view>
 #include <atomic>
 
@@ -17,17 +18,18 @@ constexpr std::string_view PIPELINE = "v4l2src device=/dev/video0 ! "
 class Camera
 {   
     public:
-        Camera(ThreadSafeQueue<cv::Mat>& buffer);
+        Camera(std::unique_ptr<ThreadSafeQueue<cv::Mat>> buffer);
         ~Camera();
-        bool initCamera();
-        void captureFrames();
-    
+        cv::Mat getFrame();
     private:
-        ThreadSafeQueue<cv::Mat>& buffer;
+        std::unique_ptr<ThreadSafeQueue<cv::Mat>> buffer;
         cv::VideoCapture cap;
         std::thread imageCaptureThread;
         std::atomic<bool> running;
-        std::shared_ptr<ImageProcessor>&
+        std::shared_ptr<ImageProcessor> imageProcessorPtr;
+        std::mutex bufferMtx;
+        bool initCamera();
+        void captureFrames();
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

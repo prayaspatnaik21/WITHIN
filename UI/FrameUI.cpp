@@ -7,24 +7,20 @@
 // Constructor / Destructor
 //////////////////////////////////////////////////////////////////////////////////
 
-FrameUI::FrameUI(ThreadSafeQueue<cv::Mat>& buffer)
+FrameUI::FrameUI()
     : running(true)
     , window(nullptr)
     , textureID(0)
-    , buffer(buffer)
 {
-    std::cout << "Frame UI created" << std::endl;
-    frameThread = std::thread(&FrameUI::captureLoop, this);
+    std::cout << "Frame UI created\n";
 }
+
+//////////////////////////////////////////////////////////////////////////////////
 
 FrameUI::~FrameUI()
 {
     std::cout << "Shutting down...\n";
-
     running.store(false);
-
-    if (frameThread.joinable())
-        frameThread.join();
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -42,6 +38,16 @@ void FrameUI::run()
 
     renderLoop();
     cleanup();
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+// External Input (from main / processing thread)
+//////////////////////////////////////////////////////////////////////////////////
+
+void FrameUI::pushFrame(cv::Mat newFrame)
+{
+    std::lock_guard<std::mutex> lock(frameMutex);
+    frame = std::move(newFrame);  // zero-copy transfer
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -66,7 +72,7 @@ void FrameUI::initWindow()
     }
 
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
+    glfwSwapInterval(1); // vsync
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -232,24 +238,6 @@ void FrameUI::cleanup()
     }
 
     glfwTerminate();
-}
-
-//////////////////////////////////////////////////////////////////////////////////
-// Capture Thread (stub — you already have this)
-//////////////////////////////////////////////////////////////////////////////////
-
-void FrameUI::captureLoop()
-{
-    while (running.load())
-    {
-        cv::Mat newFrame;
-        newFrame = buffer.pop();
-
-        {
-            std::lock_guard<std::mutex> lock(frameMutex);
-            frame = std::move(newFrame);
-        }
-    }
 }
 
 //////////////////////////////////////////////////////////////////////////////////
