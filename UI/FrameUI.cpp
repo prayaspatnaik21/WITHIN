@@ -11,6 +11,7 @@ FrameUI::FrameUI()
     : running(true)
     , window(nullptr)
     , textureID(0)
+    , currentChannels(0)
 {
     std::cout << "Frame UI created\n";
 }
@@ -41,13 +42,13 @@ void FrameUI::run()
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-// External Input (from main / processing thread)
+// External Input
 //////////////////////////////////////////////////////////////////////////////////
 
 void FrameUI::pushFrame(cv::Mat newFrame)
 {
     std::lock_guard<std::mutex> lock(frameMutex);
-    frame = std::move(newFrame);  // zero-copy transfer
+    frame = std::move(newFrame);
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -72,7 +73,7 @@ void FrameUI::initWindow()
     }
 
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // vsync
+    glfwSwapInterval(1);
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -130,9 +131,19 @@ void FrameUI::updateGLTexture(const cv::Mat& frame, bool& ready)
 {
     if (frame.empty()) return;
 
-    if (!ready)
+    int channels = frame.channels();
+
+    // Recreate texture if format changes
+    if (!ready || currentChannels != channels)
     {
-        createTexture(frame.cols, frame.rows);
+        if (textureID != 0)
+        {
+            glDeleteTextures(1, &textureID);
+            textureID = 0;
+        }
+
+        createTexture(frame.cols, frame.rows, channels);
+        currentChannels = channels;
         ready = true;
     }
 
@@ -192,19 +203,36 @@ void FrameUI::renderImGui()
 // OpenGL Texture
 //////////////////////////////////////////////////////////////////////////////////
 
-void FrameUI::createTexture(int w, int h)
+void FrameUI::createTexture(int w, int h, int channels)
 {
-    if (textureID != 0) return;
-
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-                 w, h, 0, GL_BGR,
-                 GL_UNSIGNED_BYTE, nullptr);
+    if (channels == 1)
+    {
+        // Grayscale
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED,
+                     w, h, 0, GL_RED,
+                     GL_UNSIGNED_BYTE, nullptr);
+
+        // Make grayscale display correctly
+        GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
+        glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+    }
+    else if (channels == 3)
+    {
+        // BGR (OpenCV default)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                     w, h, 0, GL_BGR,
+                     GL_UNSIGNED_BYTE, nullptr);
+    }
+    else
+    {
+        std::cerr << "Unsupported channel count: " << channels << std::endl;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -212,13 +240,26 @@ void FrameUI::createTexture(int w, int h)
 void FrameUI::updateTexture(const cv::Mat& frame)
 {
     glBindTexture(GL_TEXTURE_2D, textureID);
-
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-                    frame.cols, frame.rows,
-                    GL_BGR, GL_UNSIGNED_BYTE,
-                    frame.data);
+    if (frame.channels() == 1)
+    {
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+                        frame.cols, frame.rows,
+                        GL_RED, GL_UNSIGNED_BYTE,
+                        frame.data);
+    }
+    else if (frame.channels() == 3)
+    {
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+                        frame.cols, frame.rows,
+                        GL_BGR, GL_UNSIGNED_BYTE,
+                        frame.data);
+    }
+    else
+    {
+        std::cerr << "Unsupported format in updateTexture\n";
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -230,6 +271,12 @@ void FrameUI::cleanup()
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+
+    if (textureID != 0)
+    {
+        glDeleteTextures(1, &textureID);
+        textureID = 0;
+    }
 
     if (window)
     {

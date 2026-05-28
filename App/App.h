@@ -1,4 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma once
 
 #include <opencv2/opencv.hpp>
 #include "FrameUI.h"
@@ -6,6 +7,7 @@
 #include "ThreadSafeQueue.h"
 #include "Camera.h"
 #include "ImageProcessor.h"
+#include "Thresholding.h"
 #include <thread>
 #include <atomic> 
 

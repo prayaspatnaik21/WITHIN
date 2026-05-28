@@ -31,11 +31,19 @@ App :: ~App()
 void App :: processFrames()
 {
     std::cout << "Processing Frames" << std::endl;
-    
+    auto algorithmPtr = std::make_unique<Thresholding>();
+    imageProcessor->setAlgorithm(std::move(algorithmPtr));
+    cv::Mat out;
     while(!killed)
     {
         auto frame = cameraPtr->getFrame();
-        framePtr->pushFrame(std::move(frame));
+        imageProcessor->run(frame , out);
+        if(!out.empty())
+        {
+            //std::cout << "Push Frame" << std::endl; 
+            framePtr->pushFrame(std::move(out));
+    
+        }
     }
 }
 

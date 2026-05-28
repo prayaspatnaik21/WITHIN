@@ -1,3 +1,5 @@
+#pragma once 
+
 #include "BinaryImageFactory.h"
 
 class Thresholding : public BinaryImageFactory
