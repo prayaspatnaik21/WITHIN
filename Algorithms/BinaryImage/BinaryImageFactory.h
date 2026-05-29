@@ -5,6 +5,6 @@
 class BinaryImageFactory
 {
     public:
-        virtual void process(cv::Mat& image, cv::Mat& out) = 0;
+        virtual cv::Mat process(cv::Mat& image) = 0;
         virtual ~BinaryImageFactory() = default;
 };

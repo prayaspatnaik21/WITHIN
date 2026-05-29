@@ -31,13 +31,13 @@ App :: ~App()
 void App :: processFrames()
 {
     std::cout << "Processing Frames" << std::endl;
-    auto algorithmPtr = std::make_unique<Thresholding>();
+    auto algorithmPtr = std::make_unique<ThresholdingGPU>();
     imageProcessor->setAlgorithm(std::move(algorithmPtr));
-    cv::Mat out;
+    
     while(!killed)
     {
         auto frame = cameraPtr->getFrame();
-        imageProcessor->run(frame , out);
+        cv::Mat out = imageProcessor->run(frame);
         if(!out.empty())
         {
             //std::cout << "Push Frame" << std::endl; 

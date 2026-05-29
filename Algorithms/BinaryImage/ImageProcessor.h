@@ -10,7 +10,7 @@ class ImageProcessor
     public:
 
         void setAlgorithm(std::unique_ptr<BinaryImageFactory> algo);
-        void run(cv::Mat& image, cv::Mat& out);
+        cv::Mat run(cv::Mat& image);
     
     private:
         std::unique_ptr<BinaryImageFactory> algo;

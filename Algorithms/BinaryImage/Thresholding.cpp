@@ -3,12 +3,12 @@
 #include "Thresholding.h"
 
 //////////////////////////////////////////////////////////////////////////////////
-void Thresholding :: process(cv::Mat& in, cv::Mat& out)
+cv::Mat Thresholding :: process(cv::Mat& in)
 {
     int rows = in.rows;
     int cols = in.cols;
 
-    out.create(rows , cols , CV_8UC1);
+    cv::Mat out(rows , cols , CV_8UC1);
 
     for(int row_id = 0 ; row_id < rows ; row_id++)
     {
@@ -26,7 +26,8 @@ void Thresholding :: process(cv::Mat& in, cv::Mat& out)
             
             const float luminance = 0.212 * red + 0.7125 * green + 0.0722 * blue;
 
-            outRow[col_id] = (luminance < 178.0f) ? 0 : 255;
+            outRow[col_id] = (luminance < 100.0f) ? 0 : 255;
         }
     }
+    return out;
 }

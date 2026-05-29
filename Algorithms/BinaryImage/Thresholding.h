@@ -5,5 +5,5 @@
 class Thresholding : public BinaryImageFactory
 {
     public:
-        void process(cv::Mat& image, cv::Mat& out) override;
+        cv::Mat process(cv::Mat& image) override;
 };

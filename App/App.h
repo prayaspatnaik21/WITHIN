@@ -8,6 +8,7 @@
 #include "Camera.h"
 #include "ImageProcessor.h"
 #include "Thresholding.h"
+#include "ThresholdingGPU.h"
 #include <thread>
 #include <atomic> 
 

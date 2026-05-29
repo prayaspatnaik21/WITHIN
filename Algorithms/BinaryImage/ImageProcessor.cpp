@@ -11,10 +11,11 @@ void ImageProcessor :: setAlgorithm(std::unique_ptr<BinaryImageFactory> newAlgo)
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-void ImageProcessor :: run(cv::Mat& imageData, cv::Mat& out)
+cv::Mat ImageProcessor :: run(cv::Mat& imageData)
 {
     if(algo)
-        algo->process(imageData , out);
+        return algo->process(imageData);
+    return {};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
