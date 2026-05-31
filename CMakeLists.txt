@@ -16,14 +16,17 @@ add_executable(cam
     main.cpp
 
     App/App.cpp
-    src/utils.cpp
 
     UI/FrameUI.cpp
     Camera/Camera.cpp
 
-    Algorithms/BinaryImage/ImageProcessor.cpp
-    Algorithms/BinaryImage/Thresholding.cpp
-    Algorithms/BinaryImage/ThresholdingGPU.cu
+    Algorithms/thresholding/Thresholding.cpp
+    Algorithms/thresholding/ThresholdingGPU.cu
+
+    Core/ImageProcessor.cpp
+
+    runtime/CPURuntime.cpp
+    runtime/GPURuntime.cpp
 
     imgui/imgui.cpp
     imgui/imgui_draw.cpp
@@ -37,12 +40,13 @@ add_executable(cam
 target_include_directories(cam PRIVATE
     imgui
     imgui/backends
-    include
     UI
     Core
     Camera
     App
-    Algorithms/BinaryImage
+    Algorithms/thresholding
+    runtime
+    Utils
 )
 
 target_link_libraries(cam

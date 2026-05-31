@@ -1,0 +1,24 @@
+/////////////////////////////////////////////////////////////////////////////////
+
+#include "CPURuntime.h"
+#include "Thresholding.h"
+
+/////////////////////////////////////////////////////////////////////////////////
+
+cv::Mat CPURuntime :: execute(AlgoType algo ,cv::Mat& frame)
+{
+    switch(algo)
+    {
+        case AlgoType :: Threshold:
+            return threshold_cpu(frame);
+        // case AlgoType :: Hdr:
+        //     /**/
+        // case AlgoType :: edge:
+        //     return //;
+        default:
+            frame;
+    }
+    return frame;
+}
+
+/////////////////////////////////////////////////////////////////////////////////

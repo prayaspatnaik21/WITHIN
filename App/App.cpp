@@ -8,7 +8,7 @@ App :: App()
     :buffer(std::make_unique<ThreadSafeQueue<cv::Mat>>(60)),
     imageProcessor(std::make_shared<ImageProcessor>()),
     cameraPtr(std::make_shared<Camera>(std::move(buffer))),
-    framePtr(std::make_shared<FrameUI>()),
+    frameUiPtr(std::make_shared<FrameUI>()),
     killed(false)
     {
         imageProcessThread = std::thread(&App::processFrames , this);
@@ -31,18 +31,17 @@ App :: ~App()
 void App :: processFrames()
 {
     std::cout << "Processing Frames" << std::endl;
-    auto algorithmPtr = std::make_unique<ThresholdingGPU>();
-    imageProcessor->setAlgorithm(std::move(algorithmPtr));
+    
+    imageProcessor->addAlgorithm(AlgoType::Threshold);
     
     while(!killed)
     {
         auto frame = cameraPtr->getFrame();
-        cv::Mat out = imageProcessor->run(frame);
+        cv::Mat out = imageProcessor->process(frame);
+
         if(!out.empty())
-        {
-            //std::cout << "Push Frame" << std::endl; 
-            framePtr->pushFrame(std::move(out));
-    
+        { 
+            frameUiPtr->pushFrame(std::move(out));
         }
     }
 }
@@ -51,7 +50,7 @@ void App :: processFrames()
 
 void App :: run()
 {
-    framePtr->run();
+    frameUiPtr->run();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

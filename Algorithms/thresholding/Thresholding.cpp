@@ -3,7 +3,8 @@
 #include "Thresholding.h"
 
 //////////////////////////////////////////////////////////////////////////////////
-cv::Mat Thresholding :: process(cv::Mat& in)
+
+cv::Mat threshold_cpu(cv::Mat& in)
 {
     int rows = in.rows;
     int cols = in.cols;
@@ -31,3 +32,5 @@ cv::Mat Thresholding :: process(cv::Mat& in)
     }
     return out;
 }
+
+//////////////////////////////////////////////////////////////////////////////////

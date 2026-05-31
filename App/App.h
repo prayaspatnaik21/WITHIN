@@ -8,9 +8,9 @@
 #include "Camera.h"
 #include "ImageProcessor.h"
 #include "Thresholding.h"
-#include "ThresholdingGPU.h"
 #include <thread>
 #include <atomic> 
+#include "helper.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -24,7 +24,7 @@ class App
         std::unique_ptr<ThreadSafeQueue<cv::Mat>> buffer;
         std::shared_ptr<ImageProcessor> imageProcessor;
         std::shared_ptr<Camera> cameraPtr;
-        std::shared_ptr<FrameUI> framePtr;
+        std::shared_ptr<FrameUI> frameUiPtr;
         std::thread imageProcessThread;
         std::atomic<bool> killed;
         void processFrames();
