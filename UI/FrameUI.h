@@ -5,6 +5,7 @@
 #include <atomic>
 #include <mutex>
 #include <iostream>
+#include <memory>
 
 #include <opencv2/opencv.hpp>
 
@@ -15,6 +16,7 @@
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
+#include "ImageProcessor.h"
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -22,7 +24,7 @@ class FrameUI
 {
 public:
     // Constructor / Destructor
-    FrameUI();
+    FrameUI(std::shared_ptr<ImageProcessor> processor);
     ~FrameUI();
 
     // Main entry
@@ -36,8 +38,8 @@ private:
     // Internal State
     // ----------------------------
     std::atomic<bool> running;
-
     GLFWwindow* window;
+    
     GLuint textureID;
 
     int currentChannels;   // 👈 track grayscale vs color
@@ -45,6 +47,11 @@ private:
     // Frame sharing
     cv::Mat frame;
     std::mutex frameMutex;
+
+    std::shared_ptr<ImageProcessor> processor;
+
+    bool useGPU;
+    bool thresholdEnabled;
 
     // ----------------------------
     // Initialization

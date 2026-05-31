@@ -8,7 +8,7 @@ App :: App()
     :buffer(std::make_unique<ThreadSafeQueue<cv::Mat>>(60)),
     imageProcessor(std::make_shared<ImageProcessor>()),
     cameraPtr(std::make_shared<Camera>(std::move(buffer))),
-    frameUiPtr(std::make_shared<FrameUI>()),
+    frameUiPtr(std::make_shared<FrameUI>(imageProcessor)),
     killed(false)
     {
         imageProcessThread = std::thread(&App::processFrames , this);
@@ -31,8 +31,6 @@ App :: ~App()
 void App :: processFrames()
 {
     std::cout << "Processing Frames" << std::endl;
-    
-    imageProcessor->addAlgorithm(AlgoType::Threshold);
     
     while(!killed)
     {

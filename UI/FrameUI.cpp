@@ -1,32 +1,30 @@
-//////////////////////////////////////////////////////////////////////////////////
-
 #include "FrameUI.h"
+#include "ImageProcessor.h"
 #include "FPSCounter.h"
 
-//////////////////////////////////////////////////////////////////////////////////
-// Constructor / Destructor
-//////////////////////////////////////////////////////////////////////////////////
+// Runtime headers (your design)
+#include "CPURuntime.h"
+#include "GPURuntime.h"
 
-FrameUI::FrameUI()
-    : running(true)
-    , window(nullptr)
-    , textureID(0)
-    , currentChannels(0)
+// Algorithm enum
+#include "helper.h"
+
+FrameUI::FrameUI(std::shared_ptr<ImageProcessor> processor)
+    : running(true),
+      window(nullptr),
+      textureID(0),
+      currentChannels(0),
+      processor(processor),
+      useGPU(false),
+      thresholdEnabled(false)
 {
     std::cout << "Frame UI created\n";
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
 FrameUI::~FrameUI()
 {
-    std::cout << "Shutting down...\n";
     running.store(false);
 }
-
-//////////////////////////////////////////////////////////////////////////////////
-// Public API
-//////////////////////////////////////////////////////////////////////////////////
 
 void FrameUI::run()
 {
@@ -35,15 +33,9 @@ void FrameUI::run()
 
     initImGui();
 
-    std::cout << "UI started\n";
-
     renderLoop();
     cleanup();
 }
-
-//////////////////////////////////////////////////////////////////////////////////
-// External Input
-//////////////////////////////////////////////////////////////////////////////////
 
 void FrameUI::pushFrame(cv::Mat newFrame)
 {
@@ -51,23 +43,14 @@ void FrameUI::pushFrame(cv::Mat newFrame)
     frame = std::move(newFrame);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-// Initialization
-//////////////////////////////////////////////////////////////////////////////////
-
 void FrameUI::initWindow()
 {
     if (!glfwInit())
-    {
-        std::cerr << "GLFW init failed\n";
         return;
-    }
 
-    window = glfwCreateWindow(1280, 720, "Camera Viewer", NULL, NULL);
-
+    window = glfwCreateWindow(1280, 720, "Camera Viewer", nullptr, nullptr);
     if (!window)
     {
-        std::cerr << "Window creation failed\n";
         glfwTerminate();
         return;
     }
@@ -76,21 +59,14 @@ void FrameUI::initWindow()
     glfwSwapInterval(1);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
 void FrameUI::initImGui()
 {
-    IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
 }
-
-//////////////////////////////////////////////////////////////////////////////////
-// Render Loop
-//////////////////////////////////////////////////////////////////////////////////
 
 void FrameUI::renderLoop()
 {
@@ -112,21 +88,6 @@ void FrameUI::renderLoop()
         renderImGui();
     }
 }
-
-//////////////////////////////////////////////////////////////////////////////////
-// Frame Handling
-//////////////////////////////////////////////////////////////////////////////////
-
-void FrameUI::fetchFrame(cv::Mat& localFrame)
-{
-    std::lock_guard<std::mutex> lock(frameMutex);
-
-    if (!frame.empty())
-        localFrame = std::move(frame);
-}
-
-//////////////////////////////////////////////////////////////////////////////////
-
 void FrameUI::updateGLTexture(const cv::Mat& frame, bool& ready)
 {
     if (frame.empty()) return;
@@ -150,58 +111,30 @@ void FrameUI::updateGLTexture(const cv::Mat& frame, bool& ready)
     updateTexture(frame);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-// ImGui Helpers
-//////////////////////////////////////////////////////////////////////////////////
-
-void FrameUI::startImGuiFrame()
+void FrameUI::updateTexture(const cv::Mat& frame)
 {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-}
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-//////////////////////////////////////////////////////////////////////////////////
-
-void FrameUI::drawUI(const cv::Mat& frame, float fps)
-{
-    ImGui::Begin("Camera Debug");
-
-    ImGui::Text("FPS: %.2f", fps);
-
-    if (!frame.empty())
+    if (frame.channels() == 1)
     {
-        ImGui::Text("Resolution: %d x %d",
-                    frame.cols, frame.rows);
-
-        ImGui::Image(
-            (void*)(intptr_t)textureID,
-            ImVec2(640, 480)
-        );
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+                        frame.cols, frame.rows,
+                        GL_RED, GL_UNSIGNED_BYTE,
+                        frame.data);
+    }
+    else if (frame.channels() == 3)
+    {
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+                        frame.cols, frame.rows,
+                        GL_BGR, GL_UNSIGNED_BYTE,
+                        frame.data);
     }
     else
     {
-        ImGui::Text("Waiting for frame...");
+        std::cerr << "Unsupported format in updateTexture\n";
     }
-
-    ImGui::End();
 }
-
-//////////////////////////////////////////////////////////////////////////////////
-
-void FrameUI::renderImGui()
-{
-    ImGui::Render();
-
-    glClear(GL_COLOR_BUFFER_BIT);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    glfwSwapBuffers(window);
-}
-
-//////////////////////////////////////////////////////////////////////////////////
-// OpenGL Texture
-//////////////////////////////////////////////////////////////////////////////////
 
 void FrameUI::createTexture(int w, int h, int channels)
 {
@@ -234,37 +167,76 @@ void FrameUI::createTexture(int w, int h, int channels)
         std::cerr << "Unsupported channel count: " << channels << std::endl;
     }
 }
-
-//////////////////////////////////////////////////////////////////////////////////
-
-void FrameUI::updateTexture(const cv::Mat& frame)
+void FrameUI::fetchFrame(cv::Mat& localFrame)
 {
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    std::lock_guard<std::mutex> lock(frameMutex);
 
-    if (frame.channels() == 1)
+    if (!frame.empty())
+        localFrame = frame.clone();
+}
+
+void FrameUI::drawUI(const cv::Mat& frame, float fps)
+{
+    ImGui::Begin("Control Panel");
+
+    ImGui::Text("FPS: %.2f", fps);
+
+    // ======================
+    // RUNTIME SWITCH
+    // ======================
+    if (ImGui::Checkbox("Use GPU Runtime", &useGPU))
     {
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-                        frame.cols, frame.rows,
-                        GL_RED, GL_UNSIGNED_BYTE,
-                        frame.data);
+        if (useGPU)
+            processor->setRunTime(std::make_shared<GPURuntime>());
+        else
+            processor->setRunTime(std::make_shared<CPURuntime>());
     }
-    else if (frame.channels() == 3)
+
+    // ======================
+    // THRESHOLD TOGGLE
+    // ======================
+    if (ImGui::Checkbox("Threshold", &thresholdEnabled))
     {
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-                        frame.cols, frame.rows,
-                        GL_BGR, GL_UNSIGNED_BYTE,
-                        frame.data);
+        if (thresholdEnabled)
+            processor->addAlgorithm(AlgoType::Threshold);
+        else
+            processor->removeAlgorithm(AlgoType::Threshold);
+    }
+
+    // ======================
+    // IMAGE DISPLAY
+    // ======================
+    if (!frame.empty())
+    {
+        ImGui::Text("Resolution: %d x %d", frame.cols, frame.rows);
+
+        ImGui::Image(
+            (void*)(intptr_t)textureID,
+            ImVec2(640, 480)
+        );
     }
     else
     {
-        std::cerr << "Unsupported format in updateTexture\n";
+        ImGui::Text("Waiting for frame...");
     }
+
+    ImGui::End();
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-// Cleanup
-//////////////////////////////////////////////////////////////////////////////////
+void FrameUI::startImGuiFrame()
+{
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}
+
+void FrameUI::renderImGui()
+{
+    ImGui::Render();
+    glClear(GL_COLOR_BUFFER_BIT);
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    glfwSwapBuffers(window);
+}
 
 void FrameUI::cleanup()
 {
@@ -272,19 +244,8 @@ void FrameUI::cleanup()
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
-    if (textureID != 0)
-    {
-        glDeleteTextures(1, &textureID);
-        textureID = 0;
-    }
-
     if (window)
-    {
         glfwDestroyWindow(window);
-        window = nullptr;
-    }
 
     glfwTerminate();
 }
-
-//////////////////////////////////////////////////////////////////////////////////
