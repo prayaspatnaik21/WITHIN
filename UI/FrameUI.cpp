@@ -1,13 +1,5 @@
 #include "FrameUI.h"
-#include "ImageProcessor.h"
 #include "FPSCounter.h"
-
-// Runtime headers (your design)
-#include "CPURuntime.h"
-#include "GPURuntime.h"
-
-// Algorithm enum
-#include "helper.h"
 
 FrameUI::FrameUI(std::shared_ptr<ImageProcessor> processor)
     : running(true),
@@ -32,7 +24,6 @@ void FrameUI::run()
     if (!window) return;
 
     initImGui();
-
     renderLoop();
     cleanup();
 }
@@ -45,8 +36,7 @@ void FrameUI::pushFrame(cv::Mat newFrame)
 
 void FrameUI::initWindow()
 {
-    if (!glfwInit())
-        return;
+    if (!glfwInit()) return;
 
     window = glfwCreateWindow(1280, 720, "Camera Viewer", nullptr, nullptr);
     if (!window)
@@ -84,24 +74,129 @@ void FrameUI::renderLoop()
         fps.tick();
 
         startImGuiFrame();
-        drawUI(localFrame, fps.get());
+        drawMainLayout(localFrame, fps.get());
         renderImGui();
     }
 }
+
+//////////////////////////////////////////////////////////
+// 🔥 MAIN LAYOUT (LEFT = FRAME, RIGHT = CONTROL)
+//////////////////////////////////////////////////////////
+void FrameUI::drawMainLayout(const cv::Mat& frame, float fps)
+{
+    ImGui::Begin("Main Window", nullptr,
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoCollapse);
+
+    ImGui::SetWindowPos(ImVec2(0, 0));
+    ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
+
+    ImGui::Columns(2, nullptr, false);
+
+    drawFramePanel(frame, fps);
+    ImGui::NextColumn();
+    drawControlPanel();
+
+    ImGui::Columns(1);
+    ImGui::End();
+}
+
+//////////////////////////////////////////////////////////
+// 🎥 LEFT PANEL (FRAME)
+//////////////////////////////////////////////////////////
+void FrameUI::drawFramePanel(const cv::Mat& frame, float fps)
+{
+    ImGui::Text("Camera Feed");
+    ImGui::Separator();
+
+    ImGui::Text("FPS: %.2f", fps);
+
+    if (!frame.empty())
+    {
+        ImGui::Text("Resolution: %d x %d", frame.cols, frame.rows);
+
+        ImGui::Image(
+            (void*)(intptr_t)textureID,
+            ImVec2(800, 600)
+        );
+    }
+    else
+    {
+        ImGui::Text("Waiting for frame...");
+    }
+}
+
+//////////////////////////////////////////////////////////
+// 🎛️ RIGHT PANEL (CONTROL)
+//////////////////////////////////////////////////////////
+void FrameUI::drawControlPanel()
+{
+    ImGui::Text("Control Panel");
+    ImGui::Separator();
+
+    // ======================
+    // GPU TOGGLE BUTTON
+    // ======================
+    if (drawToggleButton("GPU Runtime", useGPU))
+    {
+        useGPU = !useGPU;
+
+        if (useGPU)
+            processor->setRunTime(std::make_shared<GPURuntime>());
+        else
+            processor->setRunTime(std::make_shared<CPURuntime>());
+    }
+
+    ImGui::Spacing();
+
+    // ======================
+    // THRESHOLD BUTTON
+    // ======================
+    if (drawToggleButton("Threshold", thresholdEnabled))
+    {
+        thresholdEnabled = !thresholdEnabled;
+
+        if (thresholdEnabled)
+            processor->addAlgorithm(AlgoType::Threshold);
+        else
+            processor->removeAlgorithm(AlgoType::Threshold);
+    }
+}
+
+//////////////////////////////////////////////////////////
+// 🎨 TOGGLE BUTTON (RED / GREEN)
+//////////////////////////////////////////////////////////
+bool FrameUI::drawToggleButton(const char* label, bool state)
+{
+    ImVec4 color = state
+        ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f)  // Green
+        : ImVec4(0.8f, 0.2f, 0.2f, 1.0f); // Red
+
+    ImGui::PushStyleColor(ImGuiCol_Button, color);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+
+    bool clicked = ImGui::Button(label, ImVec2(200, 50));
+
+    ImGui::PopStyleColor(3);
+
+    return clicked;
+}
+
+//////////////////////////////////////////////////////////
+// TEXTURE + FRAME (UNCHANGED)
+//////////////////////////////////////////////////////////
 void FrameUI::updateGLTexture(const cv::Mat& frame, bool& ready)
 {
     if (frame.empty()) return;
 
     int channels = frame.channels();
 
-    // Recreate texture if format changes
     if (!ready || currentChannels != channels)
     {
         if (textureID != 0)
-        {
             glDeleteTextures(1, &textureID);
-            textureID = 0;
-        }
 
         createTexture(frame.cols, frame.rows, channels);
         currentChannels = channels;
@@ -130,10 +225,6 @@ void FrameUI::updateTexture(const cv::Mat& frame)
                         GL_BGR, GL_UNSIGNED_BYTE,
                         frame.data);
     }
-    else
-    {
-        std::cerr << "Unsupported format in updateTexture\n";
-    }
 }
 
 void FrameUI::createTexture(int w, int h, int channels)
@@ -146,27 +237,24 @@ void FrameUI::createTexture(int w, int h, int channels)
 
     if (channels == 1)
     {
-        // Grayscale
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RED,
                      w, h, 0, GL_RED,
                      GL_UNSIGNED_BYTE, nullptr);
 
-        // Make grayscale display correctly
         GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
         glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
     }
     else if (channels == 3)
     {
-        // BGR (OpenCV default)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
                      w, h, 0, GL_BGR,
                      GL_UNSIGNED_BYTE, nullptr);
     }
-    else
-    {
-        std::cerr << "Unsupported channel count: " << channels << std::endl;
-    }
 }
+
+//////////////////////////////////////////////////////////
+// FRAME FETCH
+//////////////////////////////////////////////////////////
 void FrameUI::fetchFrame(cv::Mat& localFrame)
 {
     std::lock_guard<std::mutex> lock(frameMutex);
@@ -175,54 +263,9 @@ void FrameUI::fetchFrame(cv::Mat& localFrame)
         localFrame = frame.clone();
 }
 
-void FrameUI::drawUI(const cv::Mat& frame, float fps)
-{
-    ImGui::Begin("Control Panel");
-
-    ImGui::Text("FPS: %.2f", fps);
-
-    // ======================
-    // RUNTIME SWITCH
-    // ======================
-    if (ImGui::Checkbox("Use GPU Runtime", &useGPU))
-    {
-        if (useGPU)
-            processor->setRunTime(std::make_shared<GPURuntime>());
-        else
-            processor->setRunTime(std::make_shared<CPURuntime>());
-    }
-
-    // ======================
-    // THRESHOLD TOGGLE
-    // ======================
-    if (ImGui::Checkbox("Threshold", &thresholdEnabled))
-    {
-        if (thresholdEnabled)
-            processor->addAlgorithm(AlgoType::Threshold);
-        else
-            processor->removeAlgorithm(AlgoType::Threshold);
-    }
-
-    // ======================
-    // IMAGE DISPLAY
-    // ======================
-    if (!frame.empty())
-    {
-        ImGui::Text("Resolution: %d x %d", frame.cols, frame.rows);
-
-        ImGui::Image(
-            (void*)(intptr_t)textureID,
-            ImVec2(640, 480)
-        );
-    }
-    else
-    {
-        ImGui::Text("Waiting for frame...");
-    }
-
-    ImGui::End();
-}
-
+//////////////////////////////////////////////////////////
+// IMGUI
+//////////////////////////////////////////////////////////
 void FrameUI::startImGuiFrame()
 {
     ImGui_ImplOpenGL3_NewFrame();
@@ -238,6 +281,9 @@ void FrameUI::renderImGui()
     glfwSwapBuffers(window);
 }
 
+//////////////////////////////////////////////////////////
+// CLEANUP
+//////////////////////////////////////////////////////////
 void FrameUI::cleanup()
 {
     ImGui_ImplOpenGL3_Shutdown();

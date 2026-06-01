@@ -1,7 +1,5 @@
 #pragma once
 
-//////////////////////////////////////////////////////////////////////////////////
-
 #include <atomic>
 #include <mutex>
 #include <iostream>
@@ -11,82 +9,65 @@
 
 // OpenGL / GLFW / ImGui
 #include <GLFW/glfw3.h>
-// #include <GL/glew.h>   // or GLEW depending on your setup
 
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
-#include "ImageProcessor.h"
 
-//////////////////////////////////////////////////////////////////////////////////
+#include "ImageProcessor.h"
+#include "CPURuntime.h"
+#include "GPURuntime.h"
+#include "helper.h"
 
 class FrameUI
 {
 public:
-    // Constructor / Destructor
     FrameUI(std::shared_ptr<ImageProcessor> processor);
     ~FrameUI();
 
-    // Main entry
     void run();
-
-    // External input (producer thread)
     void pushFrame(cv::Mat newFrame);
 
 private:
-    // ----------------------------
-    // Internal State
-    // ----------------------------
     std::atomic<bool> running;
     GLFWwindow* window;
-    
+
     GLuint textureID;
+    int currentChannels;
 
-    int currentChannels;   // 👈 track grayscale vs color
-
-    // Frame sharing
     cv::Mat frame;
     std::mutex frameMutex;
 
     std::shared_ptr<ImageProcessor> processor;
 
+    // UI state
     bool useGPU;
     bool thresholdEnabled;
 
-    // ----------------------------
-    // Initialization
-    // ----------------------------
+    // Init
     void initWindow();
     void initImGui();
 
-    // ----------------------------
-    // Main Loop
-    // ----------------------------
+    // Loop
     void renderLoop();
 
-    // ----------------------------
-    // Frame Handling
-    // ----------------------------
+    // Frame
     void fetchFrame(cv::Mat& localFrame);
     void updateGLTexture(const cv::Mat& frame, bool& ready);
 
-    // ----------------------------
-    // ImGui Helpers
-    // ----------------------------
+    // UI
     void startImGuiFrame();
-    void drawUI(const cv::Mat& frame, float fps);
+    void drawMainLayout(const cv::Mat& frame, float fps);
+    void drawFramePanel(const cv::Mat& frame, float fps);
+    void drawControlPanel();
+    bool drawToggleButton(const char* label, bool state);
+
     void renderImGui();
 
-    // ----------------------------
-    // OpenGL Texture
-    // ----------------------------
-    void createTexture(int w, int h, int channels); // 👈 updated
+    // OpenGL
+    void createTexture(int w, int h, int channels);
     void updateTexture(const cv::Mat& frame);
 
-    // ----------------------------
     // Cleanup
-    // ----------------------------
     void cleanup();
 };
-
-//////////////////////////////////////////////////////////////////////////////////
