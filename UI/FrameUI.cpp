@@ -8,7 +8,8 @@ FrameUI::FrameUI(std::shared_ptr<ImageProcessor> processor)
       currentChannels(0),
       processor(processor),
       useGPU(false),
-      thresholdEnabled(false)
+      thresholdEnabled(false),
+      grayScaleConversionEnabled(false)
 {
     std::cout << "Frame UI created\n";
 }
@@ -161,6 +162,19 @@ void FrameUI::drawControlPanel()
             processor->addAlgorithm(AlgoType::Threshold);
         else
             processor->removeAlgorithm(AlgoType::Threshold);
+    }
+
+    // ============================
+    // GRAY SCALE CONVERSION BUTTON
+    // ============================
+    if (drawToggleButton("Gray Scale Conversion", grayScaleConversionEnabled))
+    {
+        grayScaleConversionEnabled = !grayScaleConversionEnabled;
+
+        if (grayScaleConversionEnabled)
+            processor->addAlgorithm(AlgoType::GreyScaleConversion);
+        else
+            processor->removeAlgorithm(AlgoType::GreyScaleConversion);
     }
 }
 

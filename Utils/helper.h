@@ -9,7 +9,8 @@ enum class AlgoType
     None,
     Threshold,
     Hdr,
-    Edge
+    Edge,
+    GreyScaleConversion
 };
 
 ////////////////////////////////////////////////////////////////////////////////

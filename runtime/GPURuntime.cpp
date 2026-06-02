@@ -10,6 +10,8 @@ cv::Mat GPURuntime :: execute(AlgoType algo , cv::Mat& frame)
     {
         case AlgoType :: Threshold:
             return threshold_gpu(frame);
+        case AlgoType :: GreyScaleConversion:
+            return grayScaleConversion_gpu(frame);
         // case AlgoType :: Hdr:
         //     /**/
         // case AlgoType :: edge:

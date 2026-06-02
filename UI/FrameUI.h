@@ -43,6 +43,7 @@ private:
     // UI state
     bool useGPU;
     bool thresholdEnabled;
+    bool grayScaleConversionEnabled;
 
     // Init
     void initWindow();

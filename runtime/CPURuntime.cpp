@@ -11,6 +11,8 @@ cv::Mat CPURuntime :: execute(AlgoType algo ,cv::Mat& frame)
     {
         case AlgoType :: Threshold:
             return threshold_cpu(frame);
+        case AlgoType :: GreyScaleConversion:
+            return grayScaleConversion_cpu(frame);
         // case AlgoType :: Hdr:
         //     /**/
         // case AlgoType :: edge:

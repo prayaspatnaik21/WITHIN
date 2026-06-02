@@ -2,7 +2,7 @@
 
 #include "IRuntime.h"
 #include "Thresholding.h"
-
+#include "ColorConversion.h"
 //////////////////////////////////////////////////////////////////////////////////
 
 class GPURuntime : public IRuntime

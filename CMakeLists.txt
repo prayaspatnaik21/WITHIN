@@ -22,6 +22,9 @@ add_executable(cam
 
     Algorithms/thresholding/Thresholding.cpp
     Algorithms/thresholding/ThresholdingGPU.cu
+    
+    Algorithms/colorConversion/ColorConversion.cpp
+    Algorithms/colorConversion/ColorConversionGPU.cu
 
     Core/ImageProcessor.cpp
 
@@ -45,6 +48,7 @@ target_include_directories(cam PRIVATE
     Camera
     App
     Algorithms/thresholding
+    Algorithms/colorConversion
     runtime
     Utils
 )
