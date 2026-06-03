@@ -1,21 +1,35 @@
-//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "Thresholding.h"
 
-//////////////////////////////////////////////////////////////////////////////////
-
-//kernel
-
-__global__ void thresholdKernel(const unsigned char* in , unsigned char* out,
-                                int width , int height , unsigned char threshold)
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+__global__ void thresholdKernelSinglechannel(const unsigned char* in , unsigned char* out , int width , int height , unsigned char threshold)
 {
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    int row_id = blockIdx.y * blockDim.y + threadIdx.y;
+    int col_id = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if(x >= width || y >= height)
+    if(col_id >= width || row_id >= height)
         return;
 
-    int idx = y * width + x;
+    int idx = row_id * width + col_id;
+
+    out[idx] = (in[idx] > threshold) ? 255 : 0;
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//kernel
+
+__global__ void thresholdKernelMultichannel(const unsigned char* in , unsigned char* out,
+                                int width , int height , unsigned char threshold)
+{
+    
+    int row_id = blockIdx.y * blockDim.y + threadIdx.y;
+    int col_id = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(col_id >= width || row_id >= height)
+        return;
+
+    int idx = row_id * width + col_id;
     int bgrIdx = idx * 3;
     
     unsigned char b = in[bgrIdx + 0];
@@ -26,7 +40,7 @@ __global__ void thresholdKernel(const unsigned char* in , unsigned char* out,
     out[idx] = (luminance > threshold) ? 255 : 0;
 }
 
-//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 cv::Mat threshold_gpu(cv::Mat& in)
 {
@@ -35,6 +49,7 @@ cv::Mat threshold_gpu(cv::Mat& in)
 
     int width = in.cols;
     int height = in.rows;
+    int channels = in.channels();
 
     int imageSize = width * height * 3;
 
@@ -50,18 +65,35 @@ cv::Mat threshold_gpu(cv::Mat& in)
     cudaMemcpy(gpu_input , in.data , imageSize , cudaMemcpyHostToDevice);
 
     ///////////////////////////////////////////////////////////////////////
+
     // Launch Kernel
     dim3 block(16 , 16);
     dim3 grid((width + 15) / 16 , (height + 15)/16);
     unsigned int threshold = 100;
 
-    thresholdKernel<<<grid , block>>>(
-        gpu_input,
-        gpu_output,
-        width,
-        height,
-        threshold
-    );
+    ///////////////////////////////////////////////////////////////////////
+
+    if(channels == 3)    
+    {
+        thresholdKernelMultichannel<<<grid , block>>>(
+            gpu_input,
+            gpu_output,
+            width,
+            height,
+            threshold
+        );
+    }
+    else
+    {
+        thresholdKernelSinglechannel<<<grid , block>>>(
+            gpu_input,
+            gpu_output,
+            width,
+            height,
+            threshold
+        );
+    }
+
 
     cudaDeviceSynchronize();
 
@@ -77,3 +109,5 @@ cv::Mat threshold_gpu(cv::Mat& in)
 
     return output;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

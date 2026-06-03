@@ -4,11 +4,33 @@
 
 //////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat threshold_cpu(cv::Mat& in)
+cv::Mat threshold_cpu_singlechannel(cv::Mat& in)
 {
     int rows = in.rows;
     int cols = in.cols;
 
+    cv::Mat out(rows , cols , CV_8UC1);
+
+    for(int row_id = 0 ; row_id < rows ; row_id++)
+    {
+        for(int col_id = 0 ; col_id < cols ; col_id++)
+        {
+            uchar pixel = in.at<uchar>(row_id , col_id);
+
+            out.at<uchar>(row_id , col_id) = (pixel < 100.0f) ? 0 : 255;
+        }
+    }
+
+    return out;
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+
+cv::Mat threshold_cpu_multichannel(cv::Mat& in)
+{
+    int rows = in.rows;
+    int cols = in.cols;
+    
     cv::Mat out(rows , cols , CV_8UC1);
 
     for(int row_id = 0 ; row_id < rows ; row_id++)
@@ -31,6 +53,20 @@ cv::Mat threshold_cpu(cv::Mat& in)
         }
     }
     return out;
+}
+cv::Mat threshold_cpu(cv::Mat& in)
+{
+    int rows = in.rows;
+    int cols = in.cols;
+
+    cv::Mat out(rows , cols , CV_8UC1);
+
+    int channels = in.channels();
+
+    if(channels == 1)
+        return threshold_cpu_singlechannel(in);
+    else
+        return threshold_cpu_multichannel(in);
 }
 
 //////////////////////////////////////////////////////////////////////////////////

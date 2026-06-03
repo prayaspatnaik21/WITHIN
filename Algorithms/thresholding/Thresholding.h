@@ -7,4 +7,6 @@
 cv::Mat threshold_cpu(cv::Mat& frame);
 cv::Mat threshold_gpu(cv::Mat& frame);
 
+cv::Mat threshold_cpu_singlechannel(cv::Mat& in);
+cv::Mat threshold_gpu_multiplechannel(cv::Mat& in);
 ////////////////////////////////////////////////////////////////////////////////////
