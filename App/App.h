@@ -7,7 +7,7 @@
 #include "ThreadSafeQueue.h"
 #include "Camera.h"
 #include "ImageProcessor.h"
-#include "Thresholding.h"
+// #include "Thresholding.h"
 #include <thread>
 #include <atomic> 
 #include "helper.h"

@@ -20,7 +20,7 @@ add_executable(cam
     UI/FrameUI.cpp
     Camera/Camera.cpp
 
-    Algorithms/thresholding/Thresholding.cpp
+    Algorithms/thresholding/ThresholdingCPU.cpp
     Algorithms/thresholding/ThresholdingGPU.cu
     
     Algorithms/colorConversion/ColorConversion.cpp
