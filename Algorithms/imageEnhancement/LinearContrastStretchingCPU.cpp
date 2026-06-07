@@ -1,11 +1,11 @@
 ////////////////////////////////////////////////////////////////////////////////////
 
-#include "LinearContrastStretching.h"
+#include "LinearContrastStretchingCPU.h"
 #include "ColorConversion.h"
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat linearContrastStretching(cv::Mat& in)
+cv::Mat linearContrastStretchingCPU(cv::Mat& in)
 {
     int rows = in.rows;
     int cols = in.cols;

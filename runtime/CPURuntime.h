@@ -3,7 +3,7 @@
 #include "IRuntime.h"
 #include "ColorConversion.h"
 #include "ThresholdingCPU.h"
-#include "LinearContrastStretching.h"
+#include "LinearContrastStretchingCPU.h"
 
 //////////////////////////////////////////////////////////////////////////////////
 

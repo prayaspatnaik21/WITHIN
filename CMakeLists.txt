@@ -25,7 +25,7 @@ add_executable(cam
     
     Algorithms/colorConversion/ColorConversion.cpp
     Algorithms/colorConversion/ColorConversionGPU.cu
-    Algorithms/imageEnhancement/LinearContrastStretching.cpp
+    Algorithms/imageEnhancement/LinearContrastStretchingCPU.cpp
     Core/ImageProcessor.cpp
 
     runtime/CPURuntime.cpp
