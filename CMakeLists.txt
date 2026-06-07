@@ -25,7 +25,7 @@ add_executable(cam
     
     Algorithms/colorConversion/ColorConversion.cpp
     Algorithms/colorConversion/ColorConversionGPU.cu
-
+    Algorithms/imageEnhancement/LinearContrastStretching.cpp
     Core/ImageProcessor.cpp
 
     runtime/CPURuntime.cpp
@@ -49,6 +49,7 @@ target_include_directories(cam PRIVATE
     App
     Algorithms/thresholding
     Algorithms/colorConversion
+    Algorithms/imageEnhancement
     runtime
     Utils
 )

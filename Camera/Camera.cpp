@@ -8,7 +8,7 @@ Camera :: Camera(std::unique_ptr<ThreadSafeQueue<cv::Mat>> buffer)
 :buffer(std::move(buffer))
 ,running(true)
 {
-    std::cout << "Camera Ctor caled" << std::endl;
+    std::cout << "Camera Ctor called" << std::endl;
     if(initCamera())
         imageCaptureThread = std::thread(&Camera::captureFrames , this);
 }

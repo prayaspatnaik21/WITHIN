@@ -9,7 +9,8 @@ FrameUI::FrameUI(std::shared_ptr<ImageProcessor> processor)
       processor(processor),
       useGPU(false),
       thresholdEnabled(false),
-      grayScaleConversionEnabled(false)
+      grayScaleConversionEnabled(false),
+      linearContrastStretchingEnabled(false)
 {
     std::cout << "Frame UI created\n";
 }
@@ -22,7 +23,11 @@ FrameUI::~FrameUI()
 void FrameUI::run()
 {
     initWindow();
-    if (!window) return;
+    if (!window)
+    {
+        std::cout << "Failed to initialize window. Exiting.\n";
+        return;
+    } 
 
     initImGui();
     renderLoop();
@@ -37,14 +42,19 @@ void FrameUI::pushFrame(cv::Mat newFrame)
 
 void FrameUI::initWindow()
 {
-    if (!glfwInit()) return;
-
+    if (!glfwInit()) 
+    {
+        std::cout << "GLFW initialization failed\n";
+        return;
+    }
     window = glfwCreateWindow(1280, 720, "Camera Viewer", nullptr, nullptr);
     if (!window)
     {
+        std::cout << "Window creation failed\n";
         glfwTerminate();
         return;
     }
+    
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
@@ -175,6 +185,16 @@ void FrameUI::drawControlPanel()
             processor->addAlgorithm(AlgoType::GreyScaleConversion);
         else
             processor->removeAlgorithm(AlgoType::GreyScaleConversion);
+    }
+
+    if (drawToggleButton("Linear Contrast Stretching", linearContrastStretchingEnabled))
+    {
+        linearContrastStretchingEnabled = !linearContrastStretchingEnabled;
+
+        if (linearContrastStretchingEnabled)
+            processor->addAlgorithm(AlgoType::LinearContrastStretch);
+        else
+            processor->removeAlgorithm(AlgoType::LinearContrastStretch);
     }
 }
 

@@ -44,7 +44,7 @@ private:
     bool useGPU;
     bool thresholdEnabled;
     bool grayScaleConversionEnabled;
-
+    bool linearContrastStretchingEnabled;
     // Init
     void initWindow();
     void initImGui();

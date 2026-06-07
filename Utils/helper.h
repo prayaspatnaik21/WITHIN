@@ -10,7 +10,8 @@ enum class AlgoType
     Threshold,
     Hdr,
     Edge,
-    GreyScaleConversion
+    GreyScaleConversion,
+    LinearContrastStretch
 };
 
 ////////////////////////////////////////////////////////////////////////////////
