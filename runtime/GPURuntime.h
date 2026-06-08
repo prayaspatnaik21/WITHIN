@@ -2,7 +2,8 @@
 
 #include "IRuntime.h"
 #include "ThresholdingGPU.h"
-#include "ColorConversion.h"
+#include "ColorConversionGPU.h"
+#include "LinearContrastStretchingGPU.h"
 
 //////////////////////////////////////////////////////////////////////////////////
 

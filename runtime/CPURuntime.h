@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 #include "IRuntime.h"
-#include "ColorConversion.h"
+#include "ColorConversionCPU.h"
 #include "ThresholdingCPU.h"
 #include "LinearContrastStretchingCPU.h"
 

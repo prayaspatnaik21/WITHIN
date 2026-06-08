@@ -23,9 +23,11 @@ add_executable(cam
     Algorithms/thresholding/ThresholdingCPU.cpp
     Algorithms/thresholding/ThresholdingGPU.cu
     
-    Algorithms/colorConversion/ColorConversion.cpp
+    Algorithms/colorConversion/ColorConversionCPU.cpp
     Algorithms/colorConversion/ColorConversionGPU.cu
+
     Algorithms/imageEnhancement/LinearContrastStretchingCPU.cpp
+    Algorithms/imageEnhancement/LinearContrastStretchingGPU.cu
     Core/ImageProcessor.cpp
 
     runtime/CPURuntime.cpp
