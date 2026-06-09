@@ -4,6 +4,7 @@
 #include "ColorConversionCPU.h"
 #include "ThresholdingCPU.h"
 #include "LinearContrastStretchingCPU.h"
+#include "histogramEqualizationCPU.h"
 
 //////////////////////////////////////////////////////////////////////////////////
 

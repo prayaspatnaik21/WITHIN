@@ -11,7 +11,8 @@ enum class AlgoType
     Hdr,
     Edge,
     GreyScaleConversion,
-    LinearContrastStretch
+    LinearContrastStretch,
+    HistogramEqualization,
 };
 
 ////////////////////////////////////////////////////////////////////////////////

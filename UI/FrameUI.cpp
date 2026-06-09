@@ -10,7 +10,8 @@ FrameUI::FrameUI(std::shared_ptr<ImageProcessor> processor)
       useGPU(false),
       thresholdEnabled(false),
       grayScaleConversionEnabled(false),
-      linearContrastStretchingEnabled(false)
+      linearContrastStretchingEnabled(false),
+      histogramEqualizationEnabled(false)
 {
     std::cout << "Frame UI created\n";
 }
@@ -195,6 +196,16 @@ void FrameUI::drawControlPanel()
             processor->addAlgorithm(AlgoType::LinearContrastStretch);
         else
             processor->removeAlgorithm(AlgoType::LinearContrastStretch);
+    }
+
+    if (drawToggleButton("Histogram Equalization", histogramEqualizationEnabled))
+    {
+        histogramEqualizationEnabled = !histogramEqualizationEnabled;
+
+        if (histogramEqualizationEnabled)
+            processor->addAlgorithm(AlgoType::HistogramEqualization);
+        else
+            processor->removeAlgorithm(AlgoType::HistogramEqualization);
     }
 }
 

@@ -14,6 +14,8 @@ cv::Mat CPURuntime :: execute(AlgoType algo ,cv::Mat& frame)
             return grayScaleConversion_cpu(frame);
         case AlgoType :: LinearContrastStretch:
             return linearContrastStretchingCPU(frame);
+        case AlgoType :: HistogramEqualization:
+            return histogramEqualizationCPU(frame);
         // case AlgoType :: Hdr:
         //     /**/
         // case AlgoType :: edge:

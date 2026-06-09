@@ -1,0 +1,133 @@
+////////////////////////////////////////////////////////////////////////////////////
+
+#include "histogramEqualizationCPU.h"
+#include "ColorConversionCPU.h"
+
+////////////////////////////////////////////////////////////////////////////////////
+/*
+
+    1. use advance loop for compute histogram and cumulative histogram
+    2. if possible use uint8_t
+*/
+void computeHistogram(const cv::Mat& in , int width , int height , std::vector<int>& histogram)
+{
+    for(int row_id = 0 ; row_id < height ; row_id++)
+    {
+        for(int col_id = 0 ; col_id < width ; col_id++)
+        {
+            histogram[static_cast<int>(in.at<uchar>(row_id,col_id))]++;
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+
+void computeCumulativeHistogram(const std::vector<int>& pdf , std::vector<int>& cdf)
+{
+    int prev = 0;
+    for(int idx = 0 ; idx < pdf.size() ; idx++)
+    {
+        cdf[idx] = prev + pdf[idx];
+        prev = cdf[idx];
+    }
+}
+////////////////////////////////////////////////////////////////////////////////////
+
+void computeMappedDigitalLevels(const std::vector<int>& cumulativeHistogram ,
+                                std::vector<int>& mappedDigitalLevels,
+                                int totalPixels)
+{
+    int size = cumulativeHistogram.size();
+
+    for(int id = 0 ; id < size ; id++)
+    {
+        mappedDigitalLevels[id] = static_cast<int>((255.0 * cumulativeHistogram[id]) / totalPixels);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+
+cv::Mat computeHistogramEqualizedImage(const cv::Mat& in , std::vector<int>& mappedDigitalLevels , int width , int height)
+{
+    cv::Mat out(height , width , CV_8UC1);
+
+    for(int row_id = 0 ; row_id < height ; row_id++)
+    {
+        for(int col_id = 0 ; col_id < width ; col_id++)
+        {
+            int pixelValue = static_cast<int>(in.at<uchar>(row_id , col_id));
+            uchar mappedPixelValue = static_cast<uchar>(mappedDigitalLevels[pixelValue]);
+            out.at<uchar>(row_id , col_id) = mappedPixelValue; 
+        }
+    }
+    return out;
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+cv::Mat histogramEqualizationCPU(cv::Mat& in)
+{
+    /*
+        General Algorithm
+        =================
+            1. creata histogram array of the input image.
+            2. find the cdf of the distribution.
+            3. find the resultant pdf we want , that is (height * width) / 256 approx frequency 
+                for each digital level.
+            4. find the cdf of the resultant pdf.
+            5. find the mapping of each Digital level in original cdf to resultant cdf (frequency should be equal or higher).
+            6. create a new image with new mapping.
+
+            7. Writing this function strictly for 8 bit image
+        Approach
+        ========
+
+            1. Use brute approach and use as many data structure possible to store intermediate results.
+    */
+
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    int width = in.cols;
+    int height = in.rows;
+    int totalPixels = width * height;
+
+    int channels = in.channels();
+
+    if(channels == 3)
+        in = grayScaleConversion_cpu(in);
+
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    std::vector<int> histogram(256,0);
+    std::vector<int> cumulativeHistogram(256 , 0 );
+    
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    // histogram
+    computeHistogram(in , width , height , histogram);
+
+    // cumulative histogram
+    computeCumulativeHistogram(histogram , cumulativeHistogram);
+
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    // int averageHistogramFrequency = (height * width) / 256;
+
+    // std::vector<int> targetHistogram(256 , averageHistogramFrequency);
+    // std::vector<int> targetCumulativeHistogram(256 , 0);
+
+    // //computeCumulativeHistogram(targetHistogram , targetCumulativeHistogram);
+
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    std::vector<int> mappedDigitalLevels(256 , 0);
+
+    computeMappedDigitalLevels(cumulativeHistogram , mappedDigitalLevels, totalPixels);
+
+    cv::Mat out = computeHistogramEqualizedImage(in , mappedDigitalLevels , width , height);
+
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    return out;
+}
+
+////////////////////////////////////////////////////////////////////////////////////

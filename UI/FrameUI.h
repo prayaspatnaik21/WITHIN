@@ -45,6 +45,7 @@ private:
     bool thresholdEnabled;
     bool grayScaleConversionEnabled;
     bool linearContrastStretchingEnabled;
+    bool histogramEqualizationEnabled;
     // Init
     void initWindow();
     void initImGui();

@@ -28,6 +28,8 @@ add_executable(cam
 
     Algorithms/imageEnhancement/LinearContrastStretchingCPU.cpp
     Algorithms/imageEnhancement/LinearContrastStretchingGPU.cu
+
+    Algorithms/imageEnhancement/histogramEqualizationCPU.cpp
     Core/ImageProcessor.cpp
 
     runtime/CPURuntime.cpp
