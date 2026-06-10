@@ -13,6 +13,7 @@ enum class AlgoType
     GreyScaleConversion,
     LinearContrastStretch,
     HistogramEqualization,
+    blur,
 };
 
 ////////////////////////////////////////////////////////////////////////////////
