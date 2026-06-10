@@ -11,38 +11,31 @@
 */
 void computeHistogram(const cv::Mat& in , int width , int height , std::vector<int>& histogram)
 {
-    for(int row_id = 0 ; row_id < height ; row_id++)
-    {
-        for(int col_id = 0 ; col_id < width ; col_id++)
-        {
-            histogram[static_cast<int>(in.at<uchar>(row_id,col_id))]++;
-        }
-    }
+
+    std::for_each(in.begin<uchar>() , in.end<uchar>() , [&](uchar pixel){
+        histogram[pixel]++;
+    });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
 
 void computeCumulativeHistogram(const std::vector<int>& pdf , std::vector<int>& cdf)
 {
-    int prev = 0;
-    for(int idx = 0 ; idx < pdf.size() ; idx++)
-    {
-        cdf[idx] = prev + pdf[idx];
-        prev = cdf[idx];
-    }
+    // Prefix Sum
+    std::partial_sum(begin(pdf) , end(pdf) , begin(cdf));
 }
 ////////////////////////////////////////////////////////////////////////////////////
 
 void computeMappedDigitalLevels(const std::vector<int>& cumulativeHistogram ,
                                 std::vector<int>& mappedDigitalLevels,
-                                int totalPixels)
+                                int totalPixels,
+                                int minHist)
 {
-    int size = cumulativeHistogram.size();
 
-    for(int id = 0 ; id < size ; id++)
-    {
-        mappedDigitalLevels[id] = static_cast<int>((255.0 * cumulativeHistogram[id]) / totalPixels);
-    }
+   std::transform(begin(cumulativeHistogram) , end(cumulativeHistogram) ,
+                  begin(mappedDigitalLevels) , [&](int value){
+                    return static_cast<int>((255.0 * (value - minHist)) / (totalPixels - minHist));
+                  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -107,21 +100,15 @@ cv::Mat histogramEqualizationCPU(cv::Mat& in)
 
     // cumulative histogram
     computeCumulativeHistogram(histogram , cumulativeHistogram);
-
     ////////////////////////////////////////////////////////////////////////////////////
 
-    // int averageHistogramFrequency = (height * width) / 256;
-
-    // std::vector<int> targetHistogram(256 , averageHistogramFrequency);
-    // std::vector<int> targetCumulativeHistogram(256 , 0);
-
-    // //computeCumulativeHistogram(targetHistogram , targetCumulativeHistogram);
+    auto minHist = *std::min_element(begin(cumulativeHistogram) , end(cumulativeHistogram));
 
     ////////////////////////////////////////////////////////////////////////////////////
 
     std::vector<int> mappedDigitalLevels(256 , 0);
 
-    computeMappedDigitalLevels(cumulativeHistogram , mappedDigitalLevels, totalPixels);
+    computeMappedDigitalLevels(cumulativeHistogram , mappedDigitalLevels, totalPixels , minHist);
 
     cv::Mat out = computeHistogramEqualizedImage(in , mappedDigitalLevels , width , height);
 
