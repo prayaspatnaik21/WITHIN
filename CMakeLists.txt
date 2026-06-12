@@ -32,6 +32,7 @@ add_executable(cam
     Algorithms/imageEnhancement/histogramEqualizationCPU.cpp
 
     Algorithms/imageEnhancement/blurImageCPU.cpp
+    Algorithms/imageEnhancement/blurImageGPU.cu
     
     Core/ImageProcessor.cpp
 

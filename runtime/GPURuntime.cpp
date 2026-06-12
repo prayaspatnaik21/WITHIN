@@ -14,6 +14,8 @@ cv::Mat GPURuntime :: execute(AlgoType algo , cv::Mat& frame)
             return grayScaleConversion_gpu(frame);
         case AlgoType :: LinearContrastStretch:
             return linearContrastStretchingGPU(frame);
+        case AlgoType :: blur:
+            return blurImageGPU(frame);
         // case AlgoType :: Hdr:
         //     /**/
         // case AlgoType :: edge:

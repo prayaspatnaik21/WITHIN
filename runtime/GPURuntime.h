@@ -4,6 +4,7 @@
 #include "ThresholdingGPU.h"
 #include "ColorConversionGPU.h"
 #include "LinearContrastStretchingGPU.h"
+#include "blurImageGPU.h"
 
 //////////////////////////////////////////////////////////////////////////////////
 
