@@ -11,7 +11,8 @@ FrameUI::FrameUI(std::shared_ptr<ImageProcessor> processor)
       thresholdEnabled(false),
       grayScaleConversionEnabled(false),
       linearContrastStretchingEnabled(false),
-      histogramEqualizationEnabled(false)
+      histogramEqualizationEnabled(false),
+      blurEnabled(false)
 {
     std::cout << "Frame UI created\n";
 }
@@ -206,6 +207,16 @@ void FrameUI::drawControlPanel()
             processor->addAlgorithm(AlgoType::HistogramEqualization);
         else
             processor->removeAlgorithm(AlgoType::HistogramEqualization);
+    }
+
+    if (drawToggleButton("Blur", blurEnabled))
+    {
+        blurEnabled = !blurEnabled;
+
+        if (blurEnabled)
+            processor->addAlgorithm(AlgoType::blur);
+        else
+            processor->removeAlgorithm(AlgoType::blur);
     }
 }
 

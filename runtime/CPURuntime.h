@@ -5,6 +5,7 @@
 #include "ThresholdingCPU.h"
 #include "LinearContrastStretchingCPU.h"
 #include "histogramEqualizationCPU.h"
+#include "blurImageCPU.h"
 
 //////////////////////////////////////////////////////////////////////////////////
 

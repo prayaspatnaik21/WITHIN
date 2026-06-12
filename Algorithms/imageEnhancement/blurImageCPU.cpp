@@ -1,10 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////////
 
-#include "blurImageCPU..h"
+#include "blurImageCPU.h"
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat computeMultiChannel(const cv::Mat& in , int height , int width)
+cv::Mat computeBlurMultiChannel(const cv::Mat& in , int height , int width)
 {
     cv::Mat out(height , width , CV_8UC3);
 
@@ -16,10 +16,11 @@ cv::Mat computeMultiChannel(const cv::Mat& in , int height , int width)
             int sum_b = 0;
             int sum_g = 0;
             int sum_r = 0;
+            int count = 0;
 
-            for(int row_id_kernel = -1 ; row_id_kernel >= 1 ; row_id_kernel++)
+            for(int row_id_kernel = -1 ; row_id_kernel <= 1 ; row_id_kernel++)
             {
-                for(int col_id_kernel = -1 ; col_id_kernel >= 1 ; col_id_kernel++)
+                for(int col_id_kernel = -1 ; col_id_kernel <= 1 ; col_id_kernel++)
                 {
 
                     if(row_id_kernel == 0 && col_id_kernel == 0)
@@ -37,11 +38,12 @@ cv::Mat computeMultiChannel(const cv::Mat& in , int height , int width)
 
                     sum_b += static_cast<int>(B);
                     sum_g += static_cast<int>(G);
-                    sum_r += static_cast<int>(R); 
+                    sum_r += static_cast<int>(R);
+                    count++; 
                 }
             }
-
-            out.at<cv::Vec3b>(row_id , col_id) = cv::Vec3b(static_cast<uchar>(sum_b/8) , static_cast<uchar>(sum_g / 8) , static_cast<uchar>(sum_r/8));
+       
+            out.at<cv::Vec3b>(row_id , col_id) = cv::Vec3b(static_cast<uchar>(sum_b/count) , static_cast<uchar>(sum_g / count) , static_cast<uchar>(sum_r/count));
         }
     }
 
@@ -50,7 +52,7 @@ cv::Mat computeMultiChannel(const cv::Mat& in , int height , int width)
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat computeSingleChannel(const cv::Mat& in , int height , int width )
+cv::Mat computeBlurSingleChannel(const cv::Mat& in , int height , int width )
 {
     cv::Mat out(height , width , CV_8UC1);
 
@@ -60,26 +62,27 @@ cv::Mat computeSingleChannel(const cv::Mat& in , int height , int width )
         {
             
             int pixel = 0;
-
-            for(int row_id_kernel = -1 ; row_id_kernel >= 1 ; row_id_kernel++)
+            int count = 0;
+            for(int row_id_kernel = -1 ; row_id_kernel <= 1 ; row_id_kernel++)
             {
-                for(int col_id_kernel = -1 ; col_id_kernel >= 1 ; col_id_kernel++)
+                for(int col_id_kernel = -1 ; col_id_kernel <= 1 ; col_id_kernel++)
                 {
 
                     if(row_id_kernel == 0 && col_id_kernel == 0)
                         continue;
 
-                    if(row_id + row_id_kernel < 0 || row_id + row_id_kernel < height ||
-                        col_id + col_id_kernel < 0 || col_id + col_id_kernel < width)
+                    if(row_id + row_id_kernel < 0 || row_id + row_id_kernel >= height ||
+                        col_id + col_id_kernel < 0 || col_id + col_id_kernel >= width)
                         continue;
 
                     uchar nePixel = in.at<uchar>(row_id + row_id_kernel , col_id + col_id_kernel);
 
                     pixel += static_cast<int>(nePixel); 
+                    count++;
                 }
             }
 
-            out.at<uchar>(row_id , col_id) = static_cast<uchar>(pixel/8);
+            out.at<uchar>(row_id , col_id) = static_cast<uchar>(pixel/count);
         }
     }
 
@@ -98,10 +101,8 @@ cv::Mat blurImageCPU(cv::Mat& in)
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    return (channels == 3) ? computeBlurMultiChannel(in , height , width , channels) :
-                             computeBlurSingleChannel(in , height , width , channels);
-
-
+    return (channels == 3) ? computeBlurMultiChannel(in , height , width) :
+                             computeBlurSingleChannel(in , height , width);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
