@@ -53,7 +53,7 @@ cv::Mat sharpeningSingleChannelImage(const cv::Mat& in , int height , int width 
 
             if(forward_col_id < width && backward_col_id >= 0)
                 horizontalNeSum = static_cast<int>(in.at<uchar>(row_id , forward_col_id)) + static_cast<int>(in.at<uchar>(row_id , backward_col_id));
-            
+            // can give weight to the ne sum , 
             
             out.at<uchar>(row_id , col_id) = static_cast<uchar>((pixelValue - (0.5 * ksharp * ((verticalNeSum + horizontalNeSum)/2))) / ( 1 - ksharp));
         }

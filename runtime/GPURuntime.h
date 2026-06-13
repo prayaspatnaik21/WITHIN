@@ -5,6 +5,7 @@
 #include "ColorConversionGPU.h"
 #include "LinearContrastStretchingGPU.h"
 #include "blurImageGPU.h"
+#include "sharpeningGPU.h"
 
 //////////////////////////////////////////////////////////////////////////////////
 

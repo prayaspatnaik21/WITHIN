@@ -16,6 +16,8 @@ cv::Mat GPURuntime :: execute(AlgoType algo , cv::Mat& frame)
             return linearContrastStretchingGPU(frame);
         case AlgoType :: blur:
             return blurImageGPU(frame);
+        case AlgoType :: sharpening:
+            return sharpeningGPU(frame);
         // case AlgoType :: Hdr:
         //     /**/
         // case AlgoType :: edge:

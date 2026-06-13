@@ -35,6 +35,7 @@ add_executable(cam
     Algorithms/imageEnhancement/blurImageGPU.cu
 
     Algorithms/imageEnhancement/sharpeningCPU.cpp
+    Algorithms/imageEnhancement/sharpeningGPU.cu
     
     Core/ImageProcessor.cpp
 
