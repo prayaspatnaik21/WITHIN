@@ -12,7 +12,8 @@ FrameUI::FrameUI(std::shared_ptr<ImageProcessor> processor)
       grayScaleConversionEnabled(false),
       linearContrastStretchingEnabled(false),
       histogramEqualizationEnabled(false),
-      blurEnabled(false)
+      blurEnabled(false),
+      sharpeningEnabled(false)
 {
     std::cout << "Frame UI created\n";
 }
@@ -217,6 +218,16 @@ void FrameUI::drawControlPanel()
             processor->addAlgorithm(AlgoType::blur);
         else
             processor->removeAlgorithm(AlgoType::blur);
+    }
+
+    if (drawToggleButton("Sharpening", sharpeningEnabled))
+    {
+        sharpeningEnabled = !sharpeningEnabled;
+
+        if (sharpeningEnabled)
+            processor->addAlgorithm(AlgoType::sharpening);
+        else
+            processor->removeAlgorithm(AlgoType::sharpening);
     }
 }
 

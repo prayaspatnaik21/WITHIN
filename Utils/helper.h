@@ -14,6 +14,7 @@ enum class AlgoType
     LinearContrastStretch,
     HistogramEqualization,
     blur,
+    sharpening,
 };
 
 ////////////////////////////////////////////////////////////////////////////////

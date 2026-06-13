@@ -18,10 +18,8 @@ cv::Mat CPURuntime :: execute(AlgoType algo ,cv::Mat& frame)
             return histogramEqualizationCPU(frame);
         case AlgoType :: blur:
             return blurImageCPU(frame);
-        // case AlgoType :: Hdr:
-        //     /**/
-        // case AlgoType :: edge:
-        //     return //;
+        case AlgoType :: sharpening:
+            return sharpeningCPU(frame);
         default:
             frame;
     }

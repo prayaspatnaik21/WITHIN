@@ -47,6 +47,7 @@ private:
     bool linearContrastStretchingEnabled;
     bool histogramEqualizationEnabled;
     bool blurEnabled;
+    bool sharpeningEnabled;
     
     // Init
     void initWindow();
