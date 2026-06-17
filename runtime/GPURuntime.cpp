@@ -4,7 +4,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat GPURuntime :: execute(AlgoType algo , cv::Mat& frame)
+cv::Mat GPURuntime :: execute(AlgoType algo , const cv::Mat& frame)
 {
     switch(algo)
     {

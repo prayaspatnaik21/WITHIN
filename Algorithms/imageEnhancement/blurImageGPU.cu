@@ -77,7 +77,7 @@ __global__ void blur_kernel_multi_channel(const unsigned char* in , unsigned cha
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat blurImageGPU(cv::Mat& in)
+cv::Mat blurImageGPU(const cv::Mat& in)
 {
     /*
         1. send in and output to the gpu

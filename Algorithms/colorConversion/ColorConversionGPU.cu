@@ -22,7 +22,7 @@ __global__ void rgb_to_gray_kernel(const unsigned char* in , unsigned char* out 
 
 }
 //////////////////////////////////////////////////////////////////
-cv::Mat grayScaleConversion_gpu(cv::Mat& in)
+cv::Mat grayScaleConversion_gpu(const cv::Mat& in)
 {
     int width = in.cols;
     int height = in.rows;

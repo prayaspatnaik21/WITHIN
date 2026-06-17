@@ -4,8 +4,8 @@
 #include <opencv2/opencv.hpp>
 ////////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat threshold_cpu(cv::Mat& frame);
-cv::Mat threshold_cpu_singlechannel(cv::Mat& in);
-cv::Mat threshold_cpu_multichannel(cv::Mat& in);
+cv::Mat threshold_cpu(const cv::Mat& frame);
+cv::Mat threshold_cpu_singlechannel(const cv::Mat& in);
+cv::Mat threshold_cpu_multichannel(const cv::Mat& in);
  
 ////////////////////////////////////////////////////////////////////////////////////

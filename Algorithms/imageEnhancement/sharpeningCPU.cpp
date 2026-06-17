@@ -54,8 +54,12 @@ cv::Mat sharpeningSingleChannelImage(const cv::Mat& in , int height , int width 
             if(forward_col_id < width && backward_col_id >= 0)
                 horizontalNeSum = static_cast<int>(in.at<uchar>(row_id , forward_col_id)) + static_cast<int>(in.at<uchar>(row_id , backward_col_id));
             // can give weight to the ne sum , 
+
+
+            float blur = (verticalNeSum + horizontalNeSum) / 4.0f;
             
-            out.at<uchar>(row_id , col_id) = static_cast<uchar>((pixelValue - (0.5 * ksharp * ((verticalNeSum + horizontalNeSum)/2))) / ( 1 - ksharp));
+            
+            out.at<uchar>(row_id , col_id) = static_cast<uchar>(std::clamp(((pixelValue - ksharp * blur) / ( 1 - ksharp)) , 0.0f , 255.0f));
         }
     }
     return out;
@@ -63,7 +67,7 @@ cv::Mat sharpeningSingleChannelImage(const cv::Mat& in , int height , int width 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat sharpeningCPU(cv::Mat& in)
+cv::Mat sharpeningCPU(const cv::Mat& in)
 {
     /*
         Imatest Algorithm on sharpening

@@ -34,7 +34,7 @@ __global__ void linearContrastStretchingKernel(const unsigned char* gpu_input , 
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat linearContrastStretchingGPU(cv::Mat& in)
+cv::Mat linearContrastStretchingGPU(const cv::Mat& in)
 {
     /*
         1. allocation of memory in gpu for the input and output.
@@ -48,11 +48,11 @@ cv::Mat linearContrastStretchingGPU(cv::Mat& in)
     int height = in.rows;
 
     int channels = in.channels();
-
+    cv::Mat colorConverted;
     // using cpu version of grey scale conversion
     if(channels == 3)
     {
-        in = grayScaleConversion_cpu(in);
+        colorConverted = grayScaleConversion_cpu(in);
     }
 
     size_t inputSize = width * height * sizeof(unsigned char);
@@ -63,7 +63,7 @@ cv::Mat linearContrastStretchingGPU(cv::Mat& in)
     double minVal , maxVal;
     cv::Point minLoc , maxLoc;
 
-    cv::minMaxLoc(in , &minVal , &maxVal , &minLoc , &maxLoc);
+    cv::minMaxLoc(colorConverted , &minVal , &maxVal , &minLoc , &maxLoc);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -77,7 +77,7 @@ cv::Mat linearContrastStretchingGPU(cv::Mat& in)
 
     // copy cpu to gpu
 
-    cudaMemcpy(gpu_input , in.data , inputSize , cudaMemcpyHostToDevice);
+    cudaMemcpy(gpu_input , colorConverted.data , inputSize , cudaMemcpyHostToDevice);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 

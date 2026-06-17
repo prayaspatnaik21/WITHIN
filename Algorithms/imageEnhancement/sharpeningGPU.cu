@@ -26,8 +26,13 @@ __global__ void sharpenSingleChannelImageKernel(const unsigned char* device_inpu
         
         if(forward_row_id < height && backward_row_id >= 0)
             verticalNeSum = static_cast<int>(device_input[forward_row_id * width + col_id] + device_input[backward_row_id * width + col_id]);
+        float blur = (verticalNeSum + horizontalNeSum) / 4.0f;
+        float val = (pixelValue - kSharp * blur) / ( 1 - kSharp);
         
-        device_output[row_id * width + col_id] = static_cast<unsigned char>((pixelValue - (0.5 * kSharp * ((verticalNeSum + horizontalNeSum)/2))) / ( 1 - kSharp));
+        val = val < 0.0f ? 0.0f : val;
+        val = val > 255.0f ? 255.0f : val;
+        
+        device_output[row_id * width + col_id] = static_cast<unsigned char>(val);
     }
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -89,7 +94,7 @@ __global__ void sharpenMultiChannelImageKernel(const unsigned char* device_input
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-cv::Mat sharpeningGPU(cv::Mat& in)
+cv::Mat sharpeningGPU(const cv::Mat& in)
 {
     /*
         1. allocation of memory in gpu for the input and output

@@ -5,7 +5,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat linearContrastStretchingCPU(cv::Mat& in)
+cv::Mat linearContrastStretchingCPU(const cv::Mat& in)
 {
     int rows = in.rows;
     int cols = in.cols;
@@ -13,10 +13,12 @@ cv::Mat linearContrastStretchingCPU(cv::Mat& in)
     int channels = in.channels();
     
     cv::Mat out(rows , cols , CV_8UC1);
-
+    cv::Mat colorConverted;
     if(channels == 3)
-        in = grayScaleConversion_cpu(in);
-    /*
+        colorConverted = grayScaleConversion_cpu(in);
+    else
+        colorConverted = std::move(in);
+        /*
     
         Pout = (pin - c)/(d - c)) * (b-a) + a
 
@@ -27,7 +29,7 @@ cv::Mat linearContrastStretchingCPU(cv::Mat& in)
     double minVal ,maxVal;
     cv::Point minLoc , maxLoc;
 
-    cv::minMaxLoc(in , &minVal , &maxVal , &minLoc , &maxLoc);
+    cv::minMaxLoc(colorConverted , &minVal , &maxVal , &minLoc , &maxLoc);
 
     for(int row_id = 0 ; row_id < rows ; row_id++)
     {
@@ -35,7 +37,7 @@ cv::Mat linearContrastStretchingCPU(cv::Mat& in)
         {
             if(maxVal > minVal)
             {
-                uchar pixel = in.at<uchar>(row_id , col_id);
+                uchar pixel = colorConverted.at<uchar>(row_id , col_id);
                 out.at<uchar>(row_id , col_id) = static_cast<uchar>(((static_cast<double>(pixel) - minVal) / (maxVal - minVal)) * 255.0);
             }
         }

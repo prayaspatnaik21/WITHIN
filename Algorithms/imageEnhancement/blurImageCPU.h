@@ -8,8 +8,8 @@
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat blurImageCPU(cv::Mat& in);
-cv::Mat computeMultiChannel(const cv::Mat& in , int height , int width );
-cv::Mat computeSingleChannel(const cv::Mat& in , int height , int width );
+cv::Mat blurImageCPU(const cv::Mat& in);
+cv::Mat computeBlurMultiChannel(const cv::Mat& in , int height , int width );
+cv::Mat computeBlurSingleChannel(const cv::Mat& in , int height , int width );
 
 ////////////////////////////////////////////////////////////////////////////////////

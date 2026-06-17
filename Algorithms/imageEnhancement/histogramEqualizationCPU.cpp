@@ -57,7 +57,7 @@ cv::Mat computeHistogramEqualizedImage(const cv::Mat& in , std::vector<int>& map
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-cv::Mat histogramEqualizationCPU(cv::Mat& in)
+cv::Mat histogramEqualizationCPU(const cv::Mat& in)
 {
     /*
         General Algorithm
@@ -84,10 +84,12 @@ cv::Mat histogramEqualizationCPU(cv::Mat& in)
     int totalPixels = width * height;
 
     int channels = in.channels();
+    cv::Mat colorConverted;
 
     if(channels == 3)
-        in = grayScaleConversion_cpu(in);
-
+        colorConverted = grayScaleConversion_cpu(in);
+    else
+        colorConverted = std::move(in);
     ////////////////////////////////////////////////////////////////////////////////////
 
     std::vector<int> histogram(256,0);
@@ -96,7 +98,7 @@ cv::Mat histogramEqualizationCPU(cv::Mat& in)
     ////////////////////////////////////////////////////////////////////////////////////
 
     // histogram
-    computeHistogram(in , width , height , histogram);
+    computeHistogram(colorConverted , width , height , histogram);
 
     // cumulative histogram
     computeCumulativeHistogram(histogram , cumulativeHistogram);
@@ -110,7 +112,7 @@ cv::Mat histogramEqualizationCPU(cv::Mat& in)
 
     computeMappedDigitalLevels(cumulativeHistogram , mappedDigitalLevels, totalPixels , minHist);
 
-    cv::Mat out = computeHistogramEqualizedImage(in , mappedDigitalLevels , width , height);
+    cv::Mat out = computeHistogramEqualizedImage(colorConverted , mappedDigitalLevels , width , height);
 
     ////////////////////////////////////////////////////////////////////////////////////
 

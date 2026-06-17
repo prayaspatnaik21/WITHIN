@@ -16,7 +16,7 @@ class ThreadSafeQueue
             std::cout << "Thread Safe Queue Ctor created" << std::endl;
         }
 
-        void push(T data)
+        void push(const T& data)
         {
             {
                 std::unique_lock<std::mutex> lock(mtx);

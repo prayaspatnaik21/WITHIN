@@ -35,13 +35,13 @@ void ImageProcessor ::removeAlgorithm(AlgoType algo)
 
 cv::Mat ImageProcessor :: process(const cv::Mat& in)
 {
-    cv::Mat frame = in;
+    cv::Mat frame;
 
     for(auto algo : pipeline)
     {
-        frame = runTimePtr->execute(algo , frame);
+        frame = runTimePtr->execute(algo , in);
     }
-    return frame;
+    return frame = (frame.empty() == true) ? std::move(in) : frame;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////

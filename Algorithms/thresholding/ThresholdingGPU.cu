@@ -42,7 +42,7 @@ __global__ void thresholdKernelMultichannel(const unsigned char* in , unsigned c
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat threshold_gpu(cv::Mat& in)
+cv::Mat threshold_gpu(const cv::Mat& in)
 {
     if(in.empty())
         return {};

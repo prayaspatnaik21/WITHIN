@@ -4,7 +4,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat CPURuntime :: execute(AlgoType algo ,cv::Mat& frame)
+cv::Mat CPURuntime :: execute(AlgoType algo ,const cv::Mat& frame)
 {
     switch(algo)
     {
@@ -21,7 +21,8 @@ cv::Mat CPURuntime :: execute(AlgoType algo ,cv::Mat& frame)
         case AlgoType :: sharpening:
             return sharpeningCPU(frame);
         default:
-            frame;
+            cv::Mat result = std::move(frame);
+            return result;
     }
     return frame;
 }

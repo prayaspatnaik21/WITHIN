@@ -3,10 +3,11 @@
 #pragma once 
 #include <opencv2/opencv.hpp>
 #include <vector>
+#include <cmath>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cv::Mat sharpeningCPU(cv::Mat& in);
+cv::Mat sharpeningCPU(const cv::Mat& in);
 cv::Mat sharpeningMultiChannelImage(const cv::Mat& in , int height , int width , float ksharp , int v);
 cv::Mat sharpeningSingleChannelImage(const cv::Mat& in , int height , int width , float ksharp , int v);
 

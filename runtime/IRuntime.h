@@ -7,7 +7,7 @@
 class IRuntime
 {
     public:
-        virtual cv::Mat execute(AlgoType algo , cv::Mat& frame) = 0;
+        virtual cv::Mat execute(AlgoType algo , const cv::Mat& frame) = 0;
         virtual ~IRuntime() = default;
 };
 

@@ -12,7 +12,7 @@
 class GPURuntime : public IRuntime
 {
     public:
-        cv::Mat execute(AlgoType algo ,  cv::Mat& frame) override;
+        cv::Mat execute(AlgoType algo ,  const cv::Mat& frame) override;
         ~GPURuntime() = default;
 };
 
