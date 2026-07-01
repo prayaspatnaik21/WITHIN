@@ -104,7 +104,15 @@ cv::Mat histogramEqualizationCPU(const cv::Mat& in)
     computeCumulativeHistogram(histogram , cumulativeHistogram);
     ////////////////////////////////////////////////////////////////////////////////////
 
-    auto minHist = *std::min_element(begin(cumulativeHistogram) , end(cumulativeHistogram));
+    auto cdfMinIt = std::find_if(begin(cumulativeHistogram) , end(cumulativeHistogram) ,
+                                 [](int value) {
+                                    return value > 0;
+                                 });
+
+    if(cdfMinIt == end(cumulativeHistogram) || *cdfMinIt == totalPixels)
+        return colorConverted.clone();
+
+    int minHist = *cdfMinIt;
 
     ////////////////////////////////////////////////////////////////////////////////////
 

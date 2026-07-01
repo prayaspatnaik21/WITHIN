@@ -35,11 +35,11 @@ void App :: processFrames()
     while(!killed)
     {
         auto frame = cameraPtr->getFrame();
-        cv::Mat out = imageProcessor->process(frame);
+        ProcessedFrame processedFrame = imageProcessor->processWithMetadata(frame);
 
-        if(!out.empty())
+        if(!processedFrame.output.empty())
         { 
-            frameUiPtr->pushFrame(std::move(out));
+            frameUiPtr->pushFrame(std::move(processedFrame));
         }
     }
 }

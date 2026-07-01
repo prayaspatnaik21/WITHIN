@@ -1,19 +1,23 @@
 #include "FrameUI.h"
 #include "FPSCounter.h"
 
+#include <utility>
+
 FrameUI::FrameUI(std::shared_ptr<ImageProcessor> processor)
     : running(true),
       window(nullptr),
       textureID(0),
       currentChannels(0),
       processor(processor),
+      imageLogger(WITHIN_LOG_DIR),
       useGPU(false),
       thresholdEnabled(false),
       grayScaleConversionEnabled(false),
       linearContrastStretchingEnabled(false),
       histogramEqualizationEnabled(false),
       blurEnabled(false),
-      sharpeningEnabled(false)
+      sharpeningEnabled(false),
+      lastSaveStatus("No comparison saved yet.")
 {
     std::cout << "Frame UI created\n";
 }
@@ -37,7 +41,7 @@ void FrameUI::run()
     cleanup();
 }
 
-void FrameUI::pushFrame(cv::Mat newFrame)
+void FrameUI::pushFrame(ProcessedFrame newFrame)
 {
     std::lock_guard<std::mutex> lock(frameMutex);
     frame = std::move(newFrame);
@@ -74,7 +78,7 @@ void FrameUI::initImGui()
 
 void FrameUI::renderLoop()
 {
-    cv::Mat localFrame;
+    ProcessedFrame localFrame;
     bool texReady = false;
     FPSCounter fps;
 
@@ -83,7 +87,7 @@ void FrameUI::renderLoop()
         glfwPollEvents();
 
         fetchFrame(localFrame);
-        updateGLTexture(localFrame, texReady);
+        updateGLTexture(localFrame.output, texReady);
 
         fps.tick();
 
@@ -96,7 +100,7 @@ void FrameUI::renderLoop()
 //////////////////////////////////////////////////////////
 // 🔥 MAIN LAYOUT (LEFT = FRAME, RIGHT = CONTROL)
 //////////////////////////////////////////////////////////
-void FrameUI::drawMainLayout(const cv::Mat& frame, float fps)
+void FrameUI::drawMainLayout(const ProcessedFrame& frame, float fps)
 {
     ImGui::Begin("Main Window", nullptr,
         ImGuiWindowFlags_NoResize |
@@ -108,7 +112,7 @@ void FrameUI::drawMainLayout(const cv::Mat& frame, float fps)
 
     ImGui::Columns(2, nullptr, false);
 
-    drawFramePanel(frame, fps);
+    drawFramePanel(frame.output, fps);
     ImGui::NextColumn();
     drawControlPanel();
 
@@ -229,6 +233,15 @@ void FrameUI::drawControlPanel()
         else
             processor->removeAlgorithm(AlgoType::sharpening);
     }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Text("Logging");
+
+    if (ImGui::Button("Save Current Comparison", ImVec2(200, 40)))
+        saveCurrentComparison();
+
+    ImGui::TextWrapped("%s", lastSaveStatus.c_str());
 }
 
 //////////////////////////////////////////////////////////
@@ -322,12 +335,30 @@ void FrameUI::createTexture(int w, int h, int channels)
 //////////////////////////////////////////////////////////
 // FRAME FETCH
 //////////////////////////////////////////////////////////
-void FrameUI::fetchFrame(cv::Mat& localFrame)
+void FrameUI::fetchFrame(ProcessedFrame& localFrame)
 {
     std::lock_guard<std::mutex> lock(frameMutex);
 
-    if (!frame.empty())
-        localFrame = frame.clone();
+    if (!frame.output.empty())
+        localFrame = frame;
+}
+
+void FrameUI::saveCurrentComparison()
+{
+    ProcessedFrame frameToSave;
+
+    {
+        std::lock_guard<std::mutex> lock(frameMutex);
+        frameToSave = frame;
+    }
+
+    std::string savedDirectory;
+    std::string errorMessage;
+
+    if (imageLogger.saveCurrentComparison(frameToSave, savedDirectory, errorMessage))
+        lastSaveStatus = "Saved: " + savedDirectory;
+    else
+        lastSaveStatus = "Save failed: " + errorMessage;
 }
 
 //////////////////////////////////////////////////////////

@@ -3,6 +3,8 @@
 #include "ImageProcessor.h"
 #include "CPURuntime.h"
 
+#include <algorithm>
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 ImageProcessor :: ImageProcessor()
@@ -14,6 +16,7 @@ ImageProcessor :: ImageProcessor()
 
 void ImageProcessor :: setRunTime(std::shared_ptr<IRuntime> runtime)
 {
+    std::lock_guard<std::mutex> lock(processorMutex);
     runTimePtr = runtime;
 }
 
@@ -21,6 +24,7 @@ void ImageProcessor :: setRunTime(std::shared_ptr<IRuntime> runtime)
 
 void ImageProcessor :: addAlgorithm(AlgoType algo)
 {
+    std::lock_guard<std::mutex> lock(processorMutex);
     pipeline.push_back(algo);
 }
 
@@ -28,6 +32,7 @@ void ImageProcessor :: addAlgorithm(AlgoType algo)
 
 void ImageProcessor ::removeAlgorithm(AlgoType algo)
 {
+    std::lock_guard<std::mutex> lock(processorMutex);
     pipeline.erase(std::remove(pipeline.begin() , pipeline.end() ,algo) , pipeline.end());
 }
 
@@ -35,13 +40,36 @@ void ImageProcessor ::removeAlgorithm(AlgoType algo)
 
 cv::Mat ImageProcessor :: process(const cv::Mat& in)
 {
-    cv::Mat frame;
+    return processWithMetadata(in).output;
+}
 
-    for(auto algo : pipeline)
+////////////////////////////////////////////////////////////////////////////////////
+
+ProcessedFrame ImageProcessor :: processWithMetadata(const cv::Mat& in)
+{
+    std::shared_ptr<IRuntime> runtimeSnapshot;
+    std::vector<AlgoType> pipelineSnapshot;
+
     {
-        frame = runTimePtr->execute(algo , in);
+        std::lock_guard<std::mutex> lock(processorMutex);
+        runtimeSnapshot = runTimePtr;
+        pipelineSnapshot = pipeline;
     }
-    return frame = (frame.empty() == true) ? std::move(in) : frame;
+
+    cv::Mat frame = in.clone();
+
+    for(auto algo : pipelineSnapshot)
+    {
+        frame = runtimeSnapshot->execute(algo , frame);
+    }
+
+    ProcessedFrame processedFrame;
+    processedFrame.input = in.clone();
+    processedFrame.output = frame.empty() ? in.clone() : frame;
+    processedFrame.pipeline = std::move(pipelineSnapshot);
+    processedFrame.runtimeName = runtimeSnapshot ? runtimeSnapshot->name() : "Unknown";
+    processedFrame.timestamp = std::chrono::system_clock::now();
+    return processedFrame;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////

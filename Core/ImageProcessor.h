@@ -3,8 +3,10 @@
 #pragma once
 #include "helper.h"
 #include "IRuntime.h"
+#include "ProcessedFrame.h"
 #include <vector>
 #include <memory>
+#include <mutex>
 #include <opencv2/opencv.hpp>
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -19,9 +21,11 @@ class ImageProcessor
       void addAlgorithm(AlgoType algo);
       void removeAlgorithm(AlgoType algo);
       cv::Mat process(const cv::Mat& in);
+      ProcessedFrame processWithMetadata(const cv::Mat& in);
     private:
         std::shared_ptr<IRuntime> runTimePtr;
         std::vector<AlgoType> pipeline;
+        std::mutex processorMutex;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////

@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Image Comparison Slider</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #101216;
+      --panel: #191d24;
+      --panel-soft: #222832;
+      --text: #f3f6fb;
+      --muted: #a9b2c2;
+      --accent: #4da3ff;
+      --border: #303847;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--background);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr)) repeat(2, minmax(140px, 1fr)) minmax(180px, auto);
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 16px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #12161d;
+      color: var(--text);
+      min-height: 38px;
+      padding: 8px 10px;
+      font: inherit;
+    }
+
+    input[type="file"] {
+      padding: 7px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid #70b8ff;
+      background: var(--accent);
+      color: #ffffff;
+      padding: 8px 12px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #318ee8;
+    }
+
+    button:disabled {
+      border-color: var(--border);
+      background: #2a303a;
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    .viewer {
+      position: relative;
+      overflow: hidden;
+      min-height: 420px;
+      border: 1px solid var(--border);
+      background: #080a0d;
+      box-shadow: 0 18px 48px var(--shadow);
+      user-select: none;
+      touch-action: none;
+    }
+
+    .viewer.is-empty {
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .image-stack {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: inherit;
+    }
+
+    .image-stack img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .before-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      width: 50%;
+    }
+
+    .before-layer img {
+      width: var(--viewer-width, 100%);
+      max-width: none;
+    }
+
+    .divider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 3px;
+      background: #ffffff;
+      transform: translateX(-50%);
+      cursor: ew-resize;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.24);
+    }
+
+    .handle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+    }
+
+    .badge {
+      position: absolute;
+      top: 16px;
+      z-index: 2;
+      max-width: min(42%, 360px);
+      padding: 8px 10px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.62);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .badge.left {
+      left: 16px;
+    }
+
+    .badge.right {
+      right: 16px;
+      text-align: right;
+    }
+
+    .range {
+      width: 100%;
+      margin-top: 14px;
+      accent-color: var(--accent);
+    }
+
+    @media (max-width: 820px) {
+      main {
+        width: min(100vw - 20px, 1120px);
+        padding: 10px 0;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .viewer {
+        min-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="toolbar" aria-label="Image comparison controls">
+      <label>
+        Left image
+        <input id="leftFile" type="file" accept="image/*">
+      </label>
+      <label>
+        Right image
+        <input id="rightFile" type="file" accept="image/*">
+      </label>
+      <label>
+        Left name
+        <input id="leftName" type="text" value="Input BGR">
+      </label>
+      <label>
+        Right name
+        <input id="rightName" type="text" value="Output pipeline">
+      </label>
+      <button id="downloadHtml" type="button">Download HTML</button>
+    </section>
+
+    <section id="viewer" class="viewer is-empty" aria-label="Image comparison viewer">
+      <p id="emptyState">Choose two images to compare</p>
+      <div id="imageStack" class="image-stack" hidden>
+        <img id="rightImage" alt="">
+        <div id="beforeLayer" class="before-layer">
+          <img id="leftImage" alt="">
+        </div>
+        <div id="leftBadge" class="badge left">Input BGR</div>
+        <div id="rightBadge" class="badge right">Output pipeline</div>
+        <div id="divider" class="divider" aria-hidden="true">
+          <div class="handle">&lt;&gt;</div>
+        </div>
+      </div>
+    </section>
+
+    <input id="slider" class="range" type="range" min="0" max="100" value="50" aria-label="Comparison position">
+  </main>
+
+  <script>
+    const viewer = document.getElementById("viewer");
+    const imageStack = document.getElementById("imageStack");
+    const emptyState = document.getElementById("emptyState");
+    const leftFile = document.getElementById("leftFile");
+    const rightFile = document.getElementById("rightFile");
+    const leftName = document.getElementById("leftName");
+    const rightName = document.getElementById("rightName");
+    const leftImage = document.getElementById("leftImage");
+    const rightImage = document.getElementById("rightImage");
+    const leftBadge = document.getElementById("leftBadge");
+    const rightBadge = document.getElementById("rightBadge");
+    const beforeLayer = document.getElementById("beforeLayer");
+    const divider = document.getElementById("divider");
+    const slider = document.getElementById("slider");
+    const downloadHtml = document.getElementById("downloadHtml");
+
+    let leftReady = false;
+    let rightReady = false;
+    let isDragging = false;
+
+    function updateLabels() {
+      leftBadge.textContent = leftName.value.trim() || "Left image";
+      rightBadge.textContent = rightName.value.trim() || "Right image";
+      leftImage.alt = leftBadge.textContent;
+      rightImage.alt = rightBadge.textContent;
+    }
+
+    function updateSplit(value) {
+      const percent = Math.min(Math.max(Number(value), 0), 100);
+      beforeLayer.style.width = `${percent}%`;
+      divider.style.left = `${percent}%`;
+      slider.value = percent;
+    }
+
+    function refreshViewer() {
+      if (!leftReady || !rightReady) {
+        viewer.classList.add("is-empty");
+        imageStack.hidden = true;
+        emptyState.hidden = false;
+        downloadHtml.disabled = true;
+        return;
+      }
+
+      viewer.classList.remove("is-empty");
+      imageStack.hidden = false;
+      emptyState.hidden = true;
+      downloadHtml.disabled = false;
+      imageStack.style.setProperty("--viewer-width", `${viewer.clientWidth}px`);
+      updateLabels();
+      updateSplit(slider.value);
+    }
+
+    function loadFile(input, imageElement, markReady) {
+      const file = input.files && input.files[0];
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        imageElement.src = reader.result;
+        markReady();
+        refreshViewer();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function setImageFromUrl(imageElement, url, markReady) {
+      imageElement.onload = () => {
+        markReady();
+        refreshViewer();
+      };
+      imageElement.src = url;
+    }
+
+    function updateFromPointer(event) {
+      const bounds = viewer.getBoundingClientRect();
+      const ratio = (event.clientX - bounds.left) / bounds.width;
+      updateSplit(ratio * 100);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function buildStandaloneHtml() {
+      const standaloneLeftName = leftName.value.trim() || "Left image";
+      const standaloneRightName = rightName.value.trim() || "Right image";
+      const standaloneLeftSrc = leftImage.src;
+      const standaloneRightSrc = rightImage.src;
+      const standaloneSplit = slider.value;
+      const escapedLeftName = escapeHtml(standaloneLeftName);
+      const escapedRightName = escapeHtml(standaloneRightName);
+      const escapedLeftSrc = escapeHtml(standaloneLeftSrc);
+      const escapedRightSrc = escapeHtml(standaloneRightSrc);
+
+      return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapedLeftName} vs ${escapedRightName}</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #101216;
+      --text: #f3f6fb;
+      --muted: #a9b2c2;
+      --accent: #4da3ff;
+      --border: #303847;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--background);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0;
+    }
+    .viewer {
+      position: relative;
+      overflow: hidden;
+      min-height: 520px;
+      border: 1px solid var(--border);
+      background: #080a0d;
+      user-select: none;
+      touch-action: none;
+    }
+    .image-stack {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: inherit;
+    }
+    img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+    .before-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      width: ${standaloneSplit}%;
+    }
+    .before-layer img {
+      width: var(--viewer-width, 100%);
+      max-width: none;
+    }
+    .divider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: ${standaloneSplit}%;
+      width: 3px;
+      background: #ffffff;
+      transform: translateX(-50%);
+      cursor: ew-resize;
+    }
+    .handle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      transform: translate(-50%, -50%);
+    }
+    .badge {
+      position: absolute;
+      top: 16px;
+      z-index: 2;
+      max-width: min(42%, 360px);
+      padding: 8px 10px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.62);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .left { left: 16px; }
+    .right { right: 16px; text-align: right; }
+    .range {
+      width: 100%;
+      margin-top: 14px;
+      accent-color: var(--accent);
+    }
+    @media (max-width: 820px) {
+      main { width: min(100vw - 20px, 1120px); padding: 10px 0; }
+      .viewer { min-height: 300px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section id="viewer" class="viewer" aria-label="Image comparison viewer">
+      <div id="imageStack" class="image-stack">
+        <img id="rightImage" src="${escapedRightSrc}" alt="${escapedRightName}">
+        <div id="beforeLayer" class="before-layer">
+          <img id="leftImage" src="${escapedLeftSrc}" alt="${escapedLeftName}">
+        </div>
+        <div class="badge left">${escapedLeftName}</div>
+        <div class="badge right">${escapedRightName}</div>
+        <div id="divider" class="divider" aria-hidden="true">
+          <div class="handle">&lt;&gt;</div>
+        </div>
+      </div>
+    </section>
+    <input id="slider" class="range" type="range" min="0" max="100" value="${standaloneSplit}" aria-label="Comparison position">
+  </main>
+  <script>
+    const viewer = document.getElementById("viewer");
+    const imageStack = document.getElementById("imageStack");
+    const beforeLayer = document.getElementById("beforeLayer");
+    const divider = document.getElementById("divider");
+    const slider = document.getElementById("slider");
+    let isDragging = false;
+
+    function updateSplit(value) {
+      const percent = Math.min(Math.max(Number(value), 0), 100);
+      beforeLayer.style.width = percent + "%";
+      divider.style.left = percent + "%";
+      slider.value = percent;
+    }
+
+    function refreshViewer() {
+      imageStack.style.setProperty("--viewer-width", viewer.clientWidth + "px");
+    }
+
+    function updateFromPointer(event) {
+      const bounds = viewer.getBoundingClientRect();
+      const ratio = (event.clientX - bounds.left) / bounds.width;
+      updateSplit(ratio * 100);
+    }
+
+    slider.addEventListener("input", () => updateSplit(slider.value));
+    viewer.addEventListener("pointerdown", (event) => {
+      isDragging = true;
+      viewer.setPointerCapture(event.pointerId);
+      updateFromPointer(event);
+    });
+    viewer.addEventListener("pointermove", (event) => {
+      if (isDragging) updateFromPointer(event);
+    });
+    viewer.addEventListener("pointerup", (event) => {
+      isDragging = false;
+      viewer.releasePointerCapture(event.pointerId);
+    });
+    window.addEventListener("resize", refreshViewer);
+    refreshViewer();
+  <\/script>
+</body>
+</html>`;
+    }
+
+    function downloadStandaloneHtml() {
+      if (!leftReady || !rightReady) {
+        return;
+      }
+
+      const html = buildStandaloneHtml();
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "image-comparison-slider.html";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    leftFile.addEventListener("change", () => {
+      loadFile(leftFile, leftImage, () => {
+        leftReady = true;
+      });
+    });
+
+    rightFile.addEventListener("change", () => {
+      loadFile(rightFile, rightImage, () => {
+        rightReady = true;
+      });
+    });
+
+    leftName.addEventListener("input", updateLabels);
+    rightName.addEventListener("input", updateLabels);
+    slider.addEventListener("input", () => updateSplit(slider.value));
+    downloadHtml.addEventListener("click", downloadStandaloneHtml);
+
+    viewer.addEventListener("pointerdown", (event) => {
+      if (!leftReady || !rightReady) {
+        return;
+      }
+
+      isDragging = true;
+      viewer.setPointerCapture(event.pointerId);
+      updateFromPointer(event);
+    });
+
+    viewer.addEventListener("pointermove", (event) => {
+      if (isDragging) {
+        updateFromPointer(event);
+      }
+    });
+
+    viewer.addEventListener("pointerup", (event) => {
+      isDragging = false;
+      viewer.releasePointerCapture(event.pointerId);
+    });
+
+    window.addEventListener("resize", refreshViewer);
+
+    const params = new URLSearchParams(window.location.search);
+    const leftUrl = params.get("left");
+    const rightUrl = params.get("right");
+    const leftLabel = params.get("leftName");
+    const rightLabel = params.get("rightName");
+
+    if (leftLabel) {
+      leftName.value = leftLabel;
+    }
+
+    if (rightLabel) {
+      rightName.value = rightLabel;
+    }
+
+    if (leftUrl) {
+      setImageFromUrl(leftImage, leftUrl, () => {
+        leftReady = true;
+      });
+    }
+
+    if (rightUrl) {
+      setImageFromUrl(rightImage, rightUrl, () => {
+        rightReady = true;
+      });
+    }
+
+    updateLabels();
+    updateSplit(50);
+    refreshViewer();
+  </script>
+</body>
+</html>

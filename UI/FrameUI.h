@@ -4,6 +4,7 @@
 #include <mutex>
 #include <iostream>
 #include <memory>
+#include <string>
 
 #include <opencv2/opencv.hpp>
 
@@ -18,6 +19,8 @@
 #include "CPURuntime.h"
 #include "GPURuntime.h"
 #include "helper.h"
+#include "ImageLogger.h"
+#include "ProcessedFrame.h"
 
 class FrameUI
 {
@@ -26,7 +29,7 @@ public:
     ~FrameUI();
 
     void run();
-    void pushFrame(cv::Mat newFrame);
+    void pushFrame(ProcessedFrame newFrame);
 
 private:
     std::atomic<bool> running;
@@ -35,10 +38,11 @@ private:
     GLuint textureID;
     int currentChannels;
 
-    cv::Mat frame;
+    ProcessedFrame frame;
     std::mutex frameMutex;
 
     std::shared_ptr<ImageProcessor> processor;
+    ImageLogger imageLogger;
 
     // UI state
     bool useGPU;
@@ -48,6 +52,7 @@ private:
     bool histogramEqualizationEnabled;
     bool blurEnabled;
     bool sharpeningEnabled;
+    std::string lastSaveStatus;
     
     // Init
     void initWindow();
@@ -57,15 +62,16 @@ private:
     void renderLoop();
 
     // Frame
-    void fetchFrame(cv::Mat& localFrame);
+    void fetchFrame(ProcessedFrame& localFrame);
     void updateGLTexture(const cv::Mat& frame, bool& ready);
 
     // UI
     void startImGuiFrame();
-    void drawMainLayout(const cv::Mat& frame, float fps);
+    void drawMainLayout(const ProcessedFrame& frame, float fps);
     void drawFramePanel(const cv::Mat& frame, float fps);
     void drawControlPanel();
     bool drawToggleButton(const char* label, bool state);
+    void saveCurrentComparison();
 
     void renderImGui();
 

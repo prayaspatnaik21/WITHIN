@@ -40,6 +40,8 @@ add_executable(cam
     
     Core/ImageProcessor.cpp
 
+    Utils/ImageLogger.cpp
+
     runtime/CPURuntime.cpp
     runtime/GPURuntime.cpp
 
@@ -50,6 +52,10 @@ add_executable(cam
 
     imgui/backends/imgui_impl_glfw.cpp
     imgui/backends/imgui_impl_opengl3.cpp
+)
+
+target_compile_definitions(cam PRIVATE
+    WITHIN_LOG_DIR="${CMAKE_SOURCE_DIR}/logs"
 )
 
 target_include_directories(cam PRIVATE
