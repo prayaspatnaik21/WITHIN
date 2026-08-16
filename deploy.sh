@@ -36,7 +36,7 @@ echo "Build successful!"
 export DISPLAY=:0
 
 echo "Launching application..."
-./cam
+# ./cam
 
 EOF
 

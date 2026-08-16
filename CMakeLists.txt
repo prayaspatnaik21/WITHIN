@@ -13,6 +13,11 @@ find_package(OpenCV REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 
+option(WITHIN_BUILD_V4L2_EXAMPLES
+    "Build standalone V4L2 learning examples"
+    ON
+)
+
 add_executable(cam
     main.cpp
 
@@ -78,3 +83,7 @@ target_link_libraries(cam
     OpenGL::GL
     dl
 )
+
+if(WITHIN_BUILD_V4L2_EXAMPLES)
+    add_subdirectory(v4l2)
+endif()
